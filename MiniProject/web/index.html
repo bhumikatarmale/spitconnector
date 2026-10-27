@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusMesh — Decentralized Offline Mesh Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%230284c7'/><circle cx='50' cy='50' r='20' fill='%2338bdf8'/></svg>">
+</head>
+<body class="dark-theme">
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <a href="#radar-section" class="nav-brand">
+            <div class="brand-icon">
+                <span class="radar-ping"></span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                    <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <circle cx="12" cy="20" r="1"></circle>
+                </svg>
+            </div>
+            <div>
+                <h1 class="brand-title">
+                    CampusMesh
+                    <span class="badge badge-accent">DTN Core</span>
+                </h1>
+                <p class="brand-subtitle">Opportunistic Delay-Tolerant P2P Mesh Network</p>
+            </div>
+        </a>
+
+        <div class="nav-metrics">
+            <div class="metric-card" title="Select which node identity this client operates as">
+                <span class="metric-label">Operating Node</span>
+                <select id="activeNodeSelect" class="form-select font-bold" style="padding: 2px 24px 2px 4px; font-size: 0.8rem; background-color: transparent; border: none; color: var(--accent-cyan); cursor: pointer;">
+                    <option value="LAPTOP_WIN">💻 LAPTOP_WIN (This Laptop)</option>
+                    <option value="PHONE_MOBILE">📱 PHONE_MOBILE (This Mobile Phone)</option>
+                    <option value="PHONE_AND">📱 PHONE_AND (Galaxy S23)</option>
+                    <option value="IPHONE_IOS">📱 IPHONE_IOS (iPhone 15)</option>
+                    <option value="LAPTOP_UBU">💻 LAPTOP_UBU (Ubuntu Lab)</option>
+                </select>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Active Strategy</span>
+                <span class="metric-value font-mono" id="navStrategy">ADAPTIVE</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Buffer Pressure</span>
+                <span class="metric-value font-mono" id="navBufferPressure">0.0%</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Radio Status</span>
+                <span class="status-indicator">
+                    <span class="dot dot-active"></span>
+                    <span>Wi-Fi + BLE 5.0</span>
+                </span>
+            </div>
+            <button id="btnConnectMobile" class="btn btn-secondary btn-sm" style="border-color: var(--accent-cyan); color: var(--accent-cyan); font-weight: 600;" title="Connect Mobile Phone or Tablet" onclick="openMobileModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                <span>Connect Mobile</span>
+            </button>
+            <button id="themeToggleBtn" class="btn btn-secondary btn-icon" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+                <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Sub-Navbar Quick Stats Ribbon & Anchor Navigation -->
+    <nav class="nav-ribbon" aria-label="Quick Navigation">
+        <div class="ribbon-stats">
+            <span class="ribbon-stat-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/></svg>
+                <span>Store: <strong id="ribbonMsgCount">0 msgs</strong></span>
+            </span>
+            <span class="ribbon-stat-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+                <span>Memory: <strong id="ribbonBufBytes">0 KB</strong> / 10 MB</span>
+            </span>
+            <span class="ribbon-stat-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+                <span>Peers: <strong id="ribbonPeersCount">Scanning...</strong></span>
+            </span>
+        </div>
+        <div class="ribbon-links">
+            <a href="#radar-section" class="ribbon-link">📡 Topology Radar</a>
+            <a href="#routing-section" class="ribbon-link">⚖️ Decision Matrix</a>
+            <a href="#buffer-section" class="ribbon-link">📦 DTN Buffer</a>
+            <a href="#compose-section" class="ribbon-link">✏️ Compose</a>
+            <a href="#ble-section" class="ribbon-link">🔍 BLE Inspector</a>
+            <a href="#logs-section" class="ribbon-link">📜 SQLite Logs</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="dashboard-grid">
+
+        <!-- Column 1: Topology Radar & Routing Matrix -->
+        <section class="grid-column">
+
+            <!-- Card 1: Interactive Mesh Topology Radar (Live Online Peers Only) -->
+            <div class="card card-radar" id="radar-section">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-header-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Live Mesh Topology & Radio Radar</h2>
+                            <p class="card-subtitle">Real-time discovered peers (Wi-Fi mDNS & BLE 5.0 GATT) — live online nodes only</p>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button id="btnRunSim" class="btn btn-primary btn-sm" title="Run store-carry-forward simulation across online nodes">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></polygon></svg>
+                            Run Multi-Hop Demo
+                        </button>
+                        <button id="btnScanBle" class="btn btn-secondary btn-sm" title="Broadcast beacon and scan for Bluetooth LE peers">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            Scan Radios
+                        </button>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="meshCanvas" width="600" height="380"></canvas>
+                    <div class="canvas-hint" id="radarOnlineBadge">Live Online Nodes Only</div>
+                    <div class="canvas-legend">
+                        <span class="legend-item"><span class="legend-color legend-wifi"></span> Wi-Fi (TCP Sockets)</span>
+                        <span class="legend-item"><span class="legend-color legend-ble"></span> Bluetooth LE (GATT)</span>
+                        <span class="legend-item"><span class="legend-color legend-local"></span> Operating Node (Center)</span>
+                    </div>
+                </div>
+
+                <div class="peer-chips-bar" id="peerChipsBar">
+                    <span class="chips-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Online Peers:
+                    </span>
+                    <div id="peerChipsList" class="chips-list">
+                        <span class="text-muted" style="font-size:0.75rem;">Listening for online peers (Wi-Fi mDNS & BLE)...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Routing Strategy & Decision Matrix -->
+            <div class="card" id="routing-section">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-header-icon" style="color: var(--accent-purple);">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Routing Engine & Adaptive Decision Matrix</h2>
+                            <p class="card-subtitle">Dynamic utility calculation: U(M) = wP·P + wT·T + wB·B</p>
+                        </div>
+                    </div>
+                    <div class="strategy-selector">
+                        <select id="strategySelect" class="form-select" title="Choose Active Routing Algorithm">
+                            <option value="ADAPTIVE">Adaptive Forwarding (Utility-based)</option>
+                            <option value="EPIDEMIC">Epidemic Flooding (Unconstrained)</option>
+                            <option value="SPRAY_AND_WAIT">Spray-and-Wait (Binary Token Splitting)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Weight Controls for Adaptive Router -->
+                <div id="adaptiveWeightsPanel">
+                    <div class="formula-badge">
+                        <span>∑ W = 1.00</span>
+                        <span>|</span>
+                        <span>U(M) = wP·P(M) + wT·T(M) + wB·B(M)</span>
+                    </div>
+
+                    <!-- Quick Preset Buttons -->
+                    <div class="weights-presets">
+                        <span class="chips-label">Presets:</span>
+                        <button type="button" class="preset-btn" onclick="applyPresetWeights(0.40, 0.40, 0.20)">Balanced (40/40/20)</button>
+                        <button type="button" class="preset-btn" onclick="applyPresetWeights(0.70, 0.20, 0.10)">Priority Bias (70/20/10)</button>
+                        <button type="button" class="preset-btn" onclick="applyPresetWeights(0.20, 0.70, 0.10)">Urgent TTL (20/70/10)</button>
+                        <button type="button" class="preset-btn" onclick="applyPresetWeights(0.15, 0.15, 0.70)">Congestion Relief (15/15/70)</button>
+                    </div>
+
+                    <div class="weights-panel">
+                        <div class="weight-control">
+                            <label for="sliderWp">
+                                <span>wP (Priority Factor)</span>
+                                <span id="valWp" class="weight-val-badge">0.40</span>
+                            </label>
+                            <input type="range" id="sliderWp" min="0" max="1" step="0.05" value="0.40">
+                        </div>
+                        <div class="weight-control">
+                            <label for="sliderWt">
+                                <span>wT (TTL Urgency)</span>
+                                <span id="valWt" class="weight-val-badge">0.40</span>
+                            </label>
+                            <input type="range" id="sliderWt" min="0" max="1" step="0.05" value="0.40">
+                        </div>
+                        <div class="weight-control">
+                            <label for="sliderWb">
+                                <span>wB (Buffer Pressure)</span>
+                                <span id="valWb" class="weight-val-badge">0.20</span>
+                            </label>
+                            <input type="range" id="sliderWb" min="0" max="1" step="0.05" value="0.20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decision Matrix Table -->
+                <div class="table-container">
+                    <table class="data-table" id="decisionTable">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Message ID</th>
+                                <th>Priority (P)</th>
+                                <th>Urgency (T)</th>
+                                <th>Buffer (B)</th>
+                                <th>Utility U(M)</th>
+                                <th>Forwarding Decision</th>
+                            </tr>
+                        </thead>
+                        <tbody id="decisionTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted" style="padding: 24px;">
+                                    Awaiting contact encounter to evaluate candidate messages...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Column 2: Buffer, Composer, BLE Inspector & Logs -->
+        <section class="grid-column">
+
+            <!-- Card 3: Store-Carry-Forward Buffer -->
+            <div class="card" id="buffer-section">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-header-icon" style="color: var(--accent-green);">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Local Message Buffer (Store–Carry–Forward)</h2>
+                            <p class="card-subtitle">
+                                <span id="bufCount" class="font-bold">0</span> messages (<span id="bufBytes" class="font-mono">0 KB</span> / 10 MB Capacity)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button id="btnPurgeExpired" class="btn btn-secondary btn-sm" title="Remove expired TTL messages from local store">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            Purge Expired
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buffer Capacity Progress Bar -->
+                <div class="progress-bar-container" title="Buffer pressure gauge (used / total capacity)">
+                    <div class="progress-bar" id="bufferPressureBar" style="width: 0%;"></div>
+                </div>
+
+                <!-- Messages List -->
+                <div class="buffer-list" id="bufferList">
+                    <div class="empty-state">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        <span>No DTN messages currently in local store.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Message Composer -->
+            <div class="card" id="compose-section">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-header-icon" style="color: var(--accent-cyan);">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Compose & Enqueue DTN Message</h2>
+                            <p class="card-subtitle">Dispatched opportunistically over Wi-Fi TCP or Bluetooth LE GATT</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="composeForm" class="compose-form">
+                    <!-- Sender & Destination Row with Swap Button -->
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="composeSource">
+                                <span>Sender (Source Node)</span>
+                            </label>
+                            <input type="text" id="composeSource" class="form-input font-bold font-mono" value="LAPTOP_WIN" required>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-icon" style="margin-bottom: 2px;" onclick="swapNodes()" title="Swap Sender and Destination">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+                        </button>
+                        <div class="form-group flex-1">
+                            <label for="composeDest">
+                                <span>Destination Peer ID</span>
+                            </label>
+                            <input type="text" id="composeDest" class="form-input font-mono" placeholder="e.g. PHONE_MOBILE, LAPTOP_UBU, or BROADCAST" value="BROADCAST" required>
+                        </div>
+                    </div>
+
+                    <!-- Quick Target Picker (Dynamically Populated from Online Peers) -->
+                    <div class="quick-targets-row" id="quickTargetsRow">
+                        <span>Quick Targets:</span>
+                        <div id="quickTargetPills" style="display:inline-flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="target-pill" onclick="setDestination('BROADCAST')">📡 BROADCAST</button>
+                        </div>
+                    </div>
+
+                    <!-- Priority, TTL and Copy Tokens -->
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="composePriority">Priority Level</label>
+                            <select id="composePriority" class="form-select">
+                                <option value="HIGH">🔴 HIGH (Weight P=1.00 - Critical)</option>
+                                <option value="MEDIUM" selected>🔵 MEDIUM (Weight P=0.67 - Standard)</option>
+                                <option value="LOW">⚪ LOW (Weight P=0.33 - Routine)</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="composeTtl">
+                                <span>TTL Expiry: <strong id="composeTtlVal" class="text-accent font-mono">60 min</strong></span>
+                            </label>
+                            <input type="range" id="composeTtl" min="60" max="86400" step="60" value="3600">
+                        </div>
+                        <div class="form-group">
+                            <label for="composeTokens" title="Spray-and-Wait initial token quota (L)">Copy Tokens (L)</label>
+                            <input type="number" id="composeTokens" class="form-input font-mono" min="1" max="16" value="4" style="width: 80px;">
+                        </div>
+                    </div>
+
+                    <!-- Quick Template Pills -->
+                    <div class="quick-targets-row">
+                        <span>Templates:</span>
+                        <button type="button" class="target-pill" onclick="applyTemplate('CAMPUS_ALERT')">🚨 Severe Weather</button>
+                        <button type="button" class="target-pill" onclick="applyTemplate('LAB_NOTICE')">🔬 Lab Relocation</button>
+                        <button type="button" class="target-pill" onclick="applyTemplate('STUDY_GROUP')">📚 Library Study</button>
+                        <button type="button" class="target-pill" onclick="applyTemplate('LOST_KEYS')">🔑 Lost Item</button>
+                    </div>
+
+                    <!-- Payload Area -->
+                    <div class="form-group">
+                        <label for="composePayload">
+                            <span>Message Payload</span>
+                            <span id="payloadBytesCounter" class="text-muted font-mono" style="font-size:0.68rem;">68 / 65,536 bytes</span>
+                        </label>
+                        <textarea id="composePayload" class="form-textarea font-mono" rows="2" placeholder="Enter message payload for mesh dissemination..." required>Campus alert: Severe weather update. Relocate to main pavilion.</textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            Dispatch to Mesh Network
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Card 5: Bluetooth LE GATT Packet Inspector & SQLite Logs -->
+            <div class="card" id="ble-section">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-header-icon" style="color: var(--accent-purple);">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="card-title">Bluetooth LE GATT Packet Inspector</h2>
+                            <p class="card-subtitle">Self-describing 13B header with CRC32 integrity verification</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ble-inspector" id="bleInspector">
+                    <div class="ble-stat-row">
+                        <span>ATT MTU: <strong class="text-accent font-mono">23B (Standard) / 512B (Negotiated)</strong></span>
+                        <span>Header: <strong class="font-mono">13 Bytes</strong></span>
+                        <span>Magic: <strong class="text-success font-mono">0x43 0x4D ('C' 'M')</strong></span>
+                        <span>Transport: <strong class="text-purple font-mono">0000FE60</strong></span>
+                    </div>
+                    <div id="bleChunksView" class="ble-chunks-view">
+                        Select or compose a message to inspect its binary chunk envelopes.
+                    </div>
+                </div>
+
+                <!-- SQLite Event Log Stream (Collapsible) -->
+                <details class="logs-accordion" id="logs-section" open>
+                    <summary class="logs-summary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                        SQLite Event Audit Trail (database/campusmesh.db)
+                    </summary>
+                    <div class="logs-stream" id="logsStream">
+                        <div>Listening for SQLite events...</div>
+                    </div>
+                </details>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div>
+            <strong>CampusMesh v2.4</strong> — Delay-Tolerant Networking (DTN) Store-Carry-Forward Intranet Mesh
+        </div>
+        <div class="footer-links">
+            <a href="/api/status" target="_blank" rel="noopener">/api/status</a>
+            <a href="/api/peers" target="_blank" rel="noopener">/api/peers</a>
+            <a href="/api/buffer" target="_blank" rel="noopener">/api/buffer</a>
+            <a href="/api/events" target="_blank" rel="noopener">/api/events</a>
+        </div>
+    </footer>
+
+    <!-- Mobile Connect Modal -->
+    <div id="mobileConnectModal" class="modal-backdrop" style="display: none;" onclick="if(event.target===this) closeMobileModal()">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="card-header-icon" style="color: var(--accent-cyan);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="modal-title">Connect Mobile Device</h3>
+                        <p class="modal-subtitle">Instant P2P connection via Wi-Fi or Mobile Hotspot</p>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-icon" onclick="closeMobileModal()" title="Close">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- URL Box -->
+                <div class="connect-url-box">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block; font-size: 0.76rem;">Open in Mobile Phone Browser (Chrome / Safari):</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="mobileUrlInput" class="form-input font-mono font-bold" readonly value="http://10.36.101.62:8080" style="color: var(--accent-cyan); font-size: 0.9rem;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="copyMobileUrl()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                            Copy URL
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step-by-Step Instructions -->
+                <div class="connect-steps">
+                    <div class="connect-step">
+                        <span class="step-num">1</span>
+                        <div>
+                            <strong>Connect to Same Network:</strong> Ensure your phone and laptop are on the same Wi-Fi router, or turn on <em>Mobile Hotspot</em> on either your laptop or phone.
+                        </div>
+                    </div>
+                    <div class="connect-step">
+                        <span class="step-num">2</span>
+                        <div>
+                            <strong>Open Browser on Phone:</strong> Open Chrome or Safari on your phone and type the URL shown above.
+                        </div>
+                    </div>
+                    <div class="connect-step">
+                        <span class="step-num">3</span>
+                        <div>
+                            <strong>Instant Discovery:</strong> The phone automatically registers as <code>PHONE_MOBILE</code> and appears on the Live Radar as an online node in active contact!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Native Apps Option -->
+                <div style="padding: 10px 14px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: var(--radius-sm); font-size: 0.74rem;">
+                    <strong style="color: var(--accent-purple);">Native Apps (Wi-Fi NSD + Bluetooth LE 5.0):</strong>
+                    <div style="margin-top: 4px; color: var(--text-secondary); line-height: 1.4;">
+                        For native offline mesh with Bluetooth LE GATT chunking:
+                        <ul style="margin-left: 18px; margin-top: 3px;">
+                            <li><strong>Android</strong>: Open <code>android/</code> in Android Studio & install on phone.</li>
+                            <li><strong>iOS</strong>: Open <code>ios/</code> in Xcode & run on iPhone.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeMobileModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="toast-container" role="region" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

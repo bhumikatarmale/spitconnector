@@ -1,0 +1,21 @@
+# Compiled class files
+*.class
+bin/
+**/bin/
+
+# SQLite databases generated at runtime
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# OS and Editor artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.iml
+.vscode/
+
+# Temporary logs
+*.log

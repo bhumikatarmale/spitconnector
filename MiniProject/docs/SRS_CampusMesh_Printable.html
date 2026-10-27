@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Requirements Specification for CampusMesh</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 20mm 18mm 20mm 18mm;
+            @top-right {
+                content: "Software Requirements Specification for CampusMesh";
+                font-family: "Times New Roman", Times, serif;
+                font-size: 10pt;
+                font-style: italic;
+                font-weight: bold;
+            }
+            @bottom-right {
+                content: "Page " counter(page);
+                font-family: "Times New Roman", Times, serif;
+                font-size: 10pt;
+            }
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 1.25;
+            color: #000000;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page {
+            width: 100%;
+            min-height: 1000px;
+            page-break-after: always;
+            position: relative;
+            box-sizing: border-box;
+            padding-bottom: 20px;
+        }
+
+        .header-running {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10pt;
+            font-style: italic;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+            padding-bottom: 4px;
+            margin-bottom: 24px;
+        }
+
+        .footer-running {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            font-size: 10pt;
+        }
+
+        /* Title Page */
+        .title-container {
+            text-align: center;
+            padding-top: 140px;
+        }
+
+        .title-doc-type {
+            font-size: 26pt;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: capitalize;
+        }
+
+        .title-for {
+            font-size: 18pt;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .title-project-name {
+            font-size: 22pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .title-subtitle {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 120px;
+        }
+
+        .title-version {
+            font-size: 20pt;
+            margin-bottom: 40px;
+        }
+
+        .meta-table {
+            width: 85%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            font-size: 11pt;
+            text-align: left;
+        }
+
+        .meta-table th, .meta-table td {
+            border: 1px solid #666;
+            padding: 6px 12px;
+        }
+
+        .meta-table th {
+            background-color: #f5f5f5;
+        }
+
+        /* Headings */
+        h1 {
+            font-size: 20pt;
+            font-weight: bold;
+            margin-top: 18px;
+            margin-bottom: 12px;
+            border-bottom: 1.5px solid #222;
+            padding-bottom: 4px;
+        }
+
+        h2 {
+            font-size: 15pt;
+            font-weight: bold;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        h3 {
+            font-size: 13pt;
+            font-weight: bold;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 8px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-top: 2px;
+            margin-bottom: 8px;
+            padding-left: 28px;
+        }
+
+        li {
+            margin-bottom: 4px;
+            text-align: justify;
+        }
+
+        /* Tables */
+        table.standard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            font-size: 10.5pt;
+        }
+
+        table.standard-table th, table.standard-table td {
+            border: 1px solid #777;
+            padding: 5px 8px;
+            vertical-align: top;
+        }
+
+        table.standard-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding-left: 0;
+            font-size: 11.5pt;
+            line-height: 1.45;
+        }
+
+        .toc-list li {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .toc-dots {
+            flex-grow: 1;
+            border-bottom: 1px dotted #888;
+            margin: 0 6px 4px 6px;
+        }
+
+        .toc-sub {
+            padding-left: 20px;
+            font-size: 10.5pt;
+        }
+
+        .toc-sub2 {
+            padding-left: 40px;
+            font-size: 10pt;
+        }
+
+        .code-box {
+            background: #f8f9fa;
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 9.5pt;
+            margin: 8px 0;
+            white-space: pre-wrap;
+            border-radius: 3px;
+        }
+
+        .badge-req {
+            font-weight: bold;
+            color: #000;
+        }
+
+        @media print {
+            .page {
+                page-break-after: always;
+                min-height: auto;
+                height: 100%;
+            }
+            body {
+                background: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: TITLE PAGE -->
+<div class="page">
+    <div style="border-top: 3px solid #000; margin-bottom: 40px;"></div>
+    <div class="title-container">
+        <div class="title-doc-type">Software Requirements Specification</div>
+        <div class="title-for">For</div>
+        <div class="title-project-name">CampusMesh: Decentralized Opportunistic Delay-Tolerant Network</div>
+        <div class="title-subtitle">For Heterogeneous Campus Communication</div>
+
+        <div class="title-version">Version 1.0</div>
+
+        <div style="margin-bottom: 20px; font-weight: bold; font-size: 13pt;">
+            Prepared by
+        </div>
+
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Roll No.</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Bhumika Anil Tarmale</strong></td>
+                    <td>2024300259</td>
+                    <td>bhumika.tarmale24@spit.ac.in</td>
+                </tr>
+                <tr>
+                    <td><strong>Sahil Azad Valvi</strong></td>
+                    <td>2024300266</td>
+                    <td>sahil.valvi24@spit.ac.in</td>
+                </tr>
+                <tr>
+                    <td><strong>Pranav Solunke</strong></td>
+                    <td>2024300246</td>
+                    <td>pranav.solunke24@spit.ac.in</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Instructor:</strong></td>
+                    <td>Prof. Yogita Patil</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Course:</strong></td>
+                    <td>Mini Project</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Department & Institution:</strong></td>
+                    <td>Sardar Patel Institute of Technology (S.P.I.T.), Mumbai</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Date:</strong></td>
+                    <td>21 October 2026</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- PAGE 2: REVISION HISTORY -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 2</span>
+    </div>
+
+    <h1>Revision History</h1>
+    <table class="standard-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">Version</th>
+                <th style="width: 25%;">Primary Author(s)</th>
+                <th style="width: 45%;">Description of Version</th>
+                <th style="width: 15%;">Date Completed</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Draft 1.0</strong></td>
+                <td>Bhumika Tarmale, Sahil Valvi, Pranav Solunke</td>
+                <td>Initial full draft of the IEEE 830 SRS document for CampusMesh decentralized delay-tolerant network.</td>
+                <td>10/21/2026</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGE 3: TABLE OF CONTENTS (PART 1) -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 3</span>
+    </div>
+
+    <h1>Table of Contents</h1>
+    <ul class="toc-list">
+        <li><span>Revision History</span><span class="toc-dots"></span><span>2</span></li>
+        <li><span>Table of Contents</span><span class="toc-dots"></span><span>3</span></li>
+        <li><strong>1 Introduction</strong><span class="toc-dots"></span><span>5</span></li>
+        <li class="toc-sub"><span>1.1 Purpose</span><span class="toc-dots"></span><span>5</span></li>
+        <li class="toc-sub"><span>1.2 Document Conventions</span><span class="toc-dots"></span><span>5</span></li>
+        <li class="toc-sub"><span>1.3 Intended Audience and Reading Suggestions</span><span class="toc-dots"></span><span>5</span></li>
+        <li class="toc-sub"><span>1.4 Product Scope</span><span class="toc-dots"></span><span>5</span></li>
+        <li class="toc-sub"><span>1.5 References</span><span class="toc-dots"></span><span>6</span></li>
+        <li><strong>2 Overall Description</strong><span class="toc-dots"></span><span>7</span></li>
+        <li class="toc-sub"><span>2.1 Product Perspective</span><span class="toc-dots"></span><span>7</span></li>
+        <li class="toc-sub"><span>2.2 Product Functions</span><span class="toc-dots"></span><span>7</span></li>
+        <li class="toc-sub"><span>2.3 User Classes and Characteristics</span><span class="toc-dots"></span><span>8</span></li>
+        <li class="toc-sub"><span>2.4 Operating Environment</span><span class="toc-dots"></span><span>8</span></li>
+        <li class="toc-sub"><span>2.5 Design and Implementation Constraints</span><span class="toc-dots"></span><span>9</span></li>
+        <li class="toc-sub"><span>2.6 User Documentation</span><span class="toc-dots"></span><span>10</span></li>
+        <li class="toc-sub"><span>2.7 Assumptions and Dependencies</span><span class="toc-dots"></span><span>10</span></li>
+        <li><strong>3 External Interface Requirements</strong><span class="toc-dots"></span><span>11</span></li>
+        <li class="toc-sub"><span>3.1 User Interfaces</span><span class="toc-dots"></span><span>11</span></li>
+        <li class="toc-sub"><span>3.2 Hardware Interfaces</span><span class="toc-dots"></span><span>12</span></li>
+        <li class="toc-sub"><span>3.3 Software Interfaces</span><span class="toc-dots"></span><span>13</span></li>
+        <li class="toc-sub"><span>3.4 Communications Interfaces</span><span class="toc-dots"></span><span>13</span></li>
+        <li><strong>4 System Features</strong><span class="toc-dots"></span><span>14</span></li>
+        <li class="toc-sub"><span>4.1 Autonomous Peer Discovery (Wi-Fi mDNS & Subnet UDP Beaconing)</span><span class="toc-dots"></span><span>14</span></li>
+        <li class="toc-sub2"><span>4.1.1 Description and Priority</span><span class="toc-dots"></span><span>14</span></li>
+        <li class="toc-sub2"><span>4.1.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>14</span></li>
+        <li class="toc-sub2"><span>4.1.3 Functional Requirements</span><span class="toc-dots"></span><span>14</span></li>
+        <li class="toc-sub"><span>4.2 Opportunistic Bluetooth Low Energy (BLE) Radio Discovery</span><span class="toc-dots"></span><span>15</span></li>
+        <li class="toc-sub2"><span>4.2.1 Description and Priority</span><span class="toc-dots"></span><span>15</span></li>
+        <li class="toc-sub2"><span>4.2.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>15</span></li>
+        <li class="toc-sub2"><span>4.2.3 Functional Requirements</span><span class="toc-dots"></span><span>15</span></li>
+        <li class="toc-sub"><span>4.3 Store–Carry–Forward Message Buffer Management</span><span class="toc-dots"></span><span>15</span></li>
+        <li class="toc-sub2"><span>4.3.1 Description and Priority</span><span class="toc-dots"></span><span>15</span></li>
+        <li class="toc-sub2"><span>4.3.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>15</span></li>
+        <li class="toc-sub2"><span>4.3.3 Functional Requirements</span><span class="toc-dots"></span><span>16</span></li>
+        <li class="toc-sub"><span>4.4 Dynamic Routing Engine (Epidemic, Spray-and-Wait, Adaptive Utility)</span><span class="toc-dots"></span><span>16</span></li>
+        <li class="toc-sub2"><span>4.4.1 Description and Priority</span><span class="toc-dots"></span><span>16</span></li>
+        <li class="toc-sub2"><span>4.4.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>16</span></li>
+        <li class="toc-sub2"><span>4.4.3 Functional Requirements</span><span class="toc-dots"></span><span>16</span></li>
+        <li class="toc-sub"><span>4.5 Multi-Transport Message Dispatch & Socket Streaming (TCP)</span><span class="toc-dots"></span><span>17</span></li>
+        <li class="toc-sub2"><span>4.5.1 Description and Priority</span><span class="toc-dots"></span><span>17</span></li>
+        <li class="toc-sub2"><span>4.5.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>17</span></li>
+        <li class="toc-sub2"><span>4.5.3 Functional Requirements</span><span class="toc-dots"></span><span>17</span></li>
+        <li class="toc-sub"><span>4.6 Bluetooth Low Energy GATT MTU Chunking & CRC32 Reassembly</span><span class="toc-dots"></span><span>17</span></li>
+    </ul>
+</div>
+
+<!-- PAGE 4: TABLE OF CONTENTS (PART 2) -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 4</span>
+    </div>
+
+    <ul class="toc-list" style="margin-top: 15px;">
+        <li class="toc-sub2"><span>4.6.1 Description and Priority</span><span class="toc-dots"></span><span>17</span></li>
+        <li class="toc-sub2"><span>4.6.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>17</span></li>
+        <li class="toc-sub2"><span>4.6.3 Functional Requirements</span><span class="toc-dots"></span><span>17</span></li>
+        <li class="toc-sub"><span>4.7 Persistent Event Logging & SQLite Audit Trail</span><span class="toc-dots"></span><span>18</span></li>
+        <li class="toc-sub2"><span>4.7.1 Description and Priority</span><span class="toc-dots"></span><span>18</span></li>
+        <li class="toc-sub2"><span>4.7.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>18</span></li>
+        <li class="toc-sub2"><span>4.7.3 Functional Requirements</span><span class="toc-dots"></span><span>18</span></li>
+        <li class="toc-sub"><span>4.8 Embedded HTTP REST API Server & Web Control Plane</span><span class="toc-dots"></span><span>19</span></li>
+        <li class="toc-sub2"><span>4.8.1 Description and Priority</span><span class="toc-dots"></span><span>19</span></li>
+        <li class="toc-sub2"><span>4.8.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>19</span></li>
+        <li class="toc-sub2"><span>4.8.3 Functional Requirements</span><span class="toc-dots"></span><span>19</span></li>
+        <li class="toc-sub"><span>4.9 Interactive Real-Time Topology Radar & Network Simulation</span><span class="toc-dots"></span><span>19</span></li>
+        <li class="toc-sub2"><span>4.9.1 Description and Priority</span><span class="toc-dots"></span><span>19</span></li>
+        <li class="toc-sub2"><span>4.9.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>19</span></li>
+        <li class="toc-sub2"><span>4.9.3 Functional Requirements</span><span class="toc-dots"></span><span>20</span></li>
+        <li class="toc-sub"><span>4.10 Device Perspective Switching & Autonomous Mobile Node Identification</span><span class="toc-dots"></span><span>20</span></li>
+        <li class="toc-sub2"><span>4.10.1 Description and Priority</span><span class="toc-dots"></span><span>20</span></li>
+        <li class="toc-sub2"><span>4.10.2 Stimulus/Response Sequences</span><span class="toc-dots"></span><span>20</span></li>
+        <li class="toc-sub2"><span>4.10.3 Functional Requirements</span><span class="toc-dots"></span><span>21</span></li>
+        <li><strong>5 Other Nonfunctional Requirements</strong><span class="toc-dots"></span><span>22</span></li>
+        <li class="toc-sub"><span>5.1 Performance Requirements</span><span class="toc-dots"></span><span>22</span></li>
+        <li class="toc-sub"><span>5.2 Safety Requirements</span><span class="toc-dots"></span><span>22</span></li>
+        <li class="toc-sub"><span>5.3 Security Requirements</span><span class="toc-dots"></span><span>23</span></li>
+        <li class="toc-sub"><span>5.4 Software Quality Attributes</span><span class="toc-dots"></span><span>23</span></li>
+        <li class="toc-sub2"><span>5.4.1 Usability</span><span class="toc-dots"></span><span>23</span></li>
+        <li class="toc-sub2"><span>5.4.2 Reliability</span><span class="toc-dots"></span><span>24</span></li>
+        <li class="toc-sub2"><span>5.4.3 Maintainability</span><span class="toc-dots"></span><span>24</span></li>
+        <li class="toc-sub2"><span>5.4.4 Portability</span><span class="toc-dots"></span><span>24</span></li>
+        <li class="toc-sub2"><span>5.4.5 Efficiency</span><span class="toc-dots"></span><span>24</span></li>
+        <li class="toc-sub"><span>5.5 Business Rules</span><span class="toc-dots"></span><span>24</span></li>
+        <li><strong>6 Other Requirements</strong><span class="toc-dots"></span><span>25</span></li>
+        <li><strong>Appendix A: Glossary</strong><span class="toc-dots"></span><span>26</span></li>
+        <li><strong>Appendix B: Analysis Models (Use Cases)</strong><span class="toc-dots"></span><span>27</span></li>
+        <li><strong>Appendix C: Data Dictionary</strong><span class="toc-dots"></span><span>30</span></li>
+        <li><strong>Appendix D: To Be Determined (TBD) List</strong><span class="toc-dots"></span><span>32</span></li>
+    </ul>
+</div>
+
+<!-- PAGE 5: SECTION 1: INTRODUCTION -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 5</span>
+    </div>
+
+    <h1>1 Introduction</h1>
+
+    <h2>1.1 Purpose</h2>
+    <p>This Software Requirements Specification (SRS) outlines the functional and non-functional requirements for <strong>CampusMesh</strong>, a decentralized, multi-transport, delay-tolerant opportunistic peer-to-peer messaging system engineered for disconnected and intermittently connected campus environments. It details the operational scope, intended user classes, architectural boundaries, external interfaces, algorithmic models, and detailed system features. This document will serve as a formal reference for developers, testers, evaluators, and the course instructor in compliance with the IEEE 830 standard.</p>
+
+    <h2>1.2 Document Conventions</h2>
+    <p>This document follows the formatting and structural guidelines established by IEEE Std 830-1998:</p>
+    <ul>
+        <li><strong>Header:</strong> Font Size: 10 pt, Font Style: Bold Italic, Font: Times New Roman</li>
+        <li><strong>Heading 1:</strong> Font Size: 20 pt, Font Style: Bold, Font: Times New Roman</li>
+        <li><strong>Heading 2 / Sub Heading:</strong> Font Size: 15 pt, Font Style: Bold, Font: Times New Roman</li>
+        <li><strong>Body Content:</strong> Font Size: 12 pt, Font Style: Regular, Font: Times New Roman, Line Spacing: 1.25</li>
+        <li><strong>Requirements Identifiers:</strong> Numbered sequentially as <code>FR-4.x.y</code> for functional features and <code>NFR-5.x.y</code> for non-functional attributes.</li>
+    </ul>
+
+    <h2>1.3 Intended Audience and Reading Suggestions</h2>
+    <p>This document is primarily intended for:</p>
+    <ul>
+        <li><strong>Campus End Users (Students, Faculty, Emergency Staff):</strong> Individuals utilizing the opportunistic mesh for offline messaging during internet blackouts. This section aids in understanding system capabilities and physical mobility reliance.</li>
+        <li><strong>Academic Evaluator / Course Instructor (Prof. Yogita Patil):</strong> To assess whether the distributed systems architecture, algorithmic models, test coverage, and documentation align with IEEE standards and course expectations.</li>
+        <li><strong>Developers and Maintainers:</strong> To clearly understand protocol state machines, buffer capacity constraints, socket serialization, and BLE GATT chunking procedures.</li>
+        <li><strong>Network Testers:</strong> To design automated test cases validating message deduplication, token splitting, and multi-hop routing benchmarks.</li>
+    </ul>
+    <p>This document is organized following the IEEE 830 structure. Readers are encouraged to review Sections 1 and 2 for conceptual grounding before diving into the formal technical requirements in Sections 3 through 6 and Appendices.</p>
+
+    <h2>1.4 Product Scope</h2>
+    <p>CampusMesh provides decentralized, infrastructure-free communication across university campuses by implementing the <strong>Store–Carry–Forward</strong> Delay-Tolerant Networking (DTN) model. Users can compose, buffer, and exchange priority-rated messages across heterogeneous devices (Windows, Ubuntu, Android, iOS) without requiring an active internet connection, cellular service, or centralized routing servers. By operating over both high-speed Wi-Fi sockets and short-range Bluetooth Low Energy (BLE) GATT channels, the system ensures that physical mobility bridges partitioned networks.</p>
+</div>
+
+<!-- PAGE 6: SECTION 1.5 REFERENCES -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 6</span>
+    </div>
+
+    <p>The platform features an autonomous peer discovery daemon, thread-safe memory-bounded local storage (10 MB cap), a dynamic routing engine supporting Epidemic, Spray-and-Wait, and Adaptive Multi-Metric Utility routing, length-prefixed TCP streaming, MTU-aware BLE packet slicing with CRC32 integrity verification, SQLite relational event logging, and an embedded zero-dependency HTTP REST control center featuring an interactive HTML5 canvas radar topology.</p>
+
+    <h2>1.5 References</h2>
+    <ol>
+        <li>V. Cerf, S. Burleigh, A. Hooke, L. Torgerson, R. Durst, K. Scott, K. Fall, and H. Weiss, “Delay-Tolerant Networking Architecture,” <em>RFC 4838</em>, Internet Engineering Task Force (IETF), Apr. 2007. <a href="https://datatracker.ietf.org/doc/html/rfc4838">https://datatracker.ietf.org/doc/html/rfc4838</a></li>
+        <li>K. Fall, “A Delay-Tolerant Network Architecture for Challenged Internets,” in <em>Proc. ACM SIGCOMM 2003 Conference (SIGCOMM ’03)</em>, Karlsruhe, Germany, 2003, pp. 27–34.</li>
+        <li>A. Vahdat and D. Becker, “Epidemic Routing for Partially-Connected Ad Hoc Networks,” Technical Report CS-200006, Duke University, Tech. Rep., Jul. 2000.</li>
+        <li>T. Spyropoulos, K. Psounis, and C. S. Raghavendra, “Spray and Wait: An Efficient Routing Scheme for Intermittently Connected Mobile Networks,” in <em>Proc. ACM SIGCOMM Workshop on Delay-Tolerant Networking (WDTN ’05)</em>, Philadelphia, PA, USA, 2005, pp. 252–259.</li>
+        <li>Bluetooth Special Interest Group (SIG), “Bluetooth Core Specification Version 5.3: Low Energy Generic Attribute Profile (GATT),” Kirkland, WA, USA, Jul. 2021.</li>
+        <li>IEEE Computer Society, “IEEE Recommended Practice for Software Requirements Specifications,” <em>IEEE Std 830-1998</em>, Oct. 1998.</li>
+    </ol>
+</div>
+
+<!-- PAGE 7: SECTION 2: OVERALL DESCRIPTION -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 7</span>
+    </div>
+
+    <h1>2 Overall Description</h1>
+
+    <h2>2.1 Product Perspective</h2>
+    <p>In modern academic campus environments, everyday communications rely entirely on centralized infrastructure: cellular base stations, campus Wi-Fi access points, core switches, and cloud servers. During severe power failures, monsoon storms, network hardware breakdowns, or high-density campus events, centralized networks frequently collapse, creating total information dead zones. Traditional mobile messaging applications (WhatsApp, Telegram, Slack) fail completely without an active internet gateway.</p>
+
+    <p>CampusMesh is introduced to establish resilient, decentralized connectivity in such environments. Operating under the Delay-Tolerant Networking (DTN) store-carry-forward model, each device running CampusMesh functions as a standalone packet router and carrier. When two students or faculty members walk within radio range, their devices autonomously establish direct physical links over local Wi-Fi or Bluetooth Low Energy, exchanging stored messages before parting ways. Over time, messages cascade across the campus from student to student until reaching the target destination or diffusing across the entire community.</p>
+
+    <h2>2.2 Product Functions</h2>
+    <ul>
+        <li>Autonomous zero-configuration discovery of neighboring peers via Wi-Fi mDNS, UDP subnet multicasting (<code>239.255.77.88:5354</code>), and BLE advertising.</li>
+        <li>Dynamic radio encounter detection and contact lifecycle tracking via <code>ContactManager</code>.</li>
+        <li>Store-Carry-Forward message buffering with strict 10 MB memory capacity enforcement.</li>
+        <li>Binary duplicate message detection and idempotent packet rejection.</li>
+        <li>Real-time timestamp-based Time-To-Live (TTL) tracking with automatic expiration purging.</li>
+        <li>Pluggable routing strategy selection: Epidemic Flooding, Spray-and-Wait binary token splitting, and Adaptive Utility scoring.</li>
+        <li>Multi-metric adaptive utility ranking balancing Priority ($P$), TTL Urgency ($T$), and Buffer Pressure ($B$).</li>
+        <li>High-speed stream-safe 4-byte big-endian length-prefixed TCP socket transport.</li>
+        <li>Bluetooth Low Energy MTU-aware slicing (23–512 bytes) with 13-byte headers and end-to-end CRC32 checksum reassembly.</li>
+        <li>Thread-safe relational event auditing to local SQLite database (<code>database/campusmesh.db</code>).</li>
+        <li>Embedded zero-dependency HTTP server delivering a real-time web control center on port 8080.</li>
+        <li>Interactive HTML5 Canvas radar displaying live node topology, multi-transport links, and animated packet hops.</li>
+        <li>Autonomous mobile device identification and independent client perspective switching.</li>
+    </ul>
+</div>
+
+<!-- PAGE 8: SECTION 2.3 & 2.4 -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 8</span>
+    </div>
+
+    <h2>2.3 User Classes and Characteristics</h2>
+    <p>The system serves four distinct user classes:</p>
+    <ul>
+        <li><strong>Campus Users (Students, Faculty, Staff):</strong>
+            <ul>
+                <li>Non-technical or moderately technical users.</li>
+                <li>Operate smartphones and laptops while traversing campus buildings.</li>
+                <li>Use the web dashboard to compose local alerts, view incoming notices, and track buffer contents.</li>
+            </ul>
+        </li>
+        <li><strong>Emergency Response & Security Coordinators:</strong>
+            <ul>
+                <li>Responsible for safety broadcasts and critical administrative alerts.</li>
+                <li>Require high-priority message preemption and broad mesh dissemination without internet access.</li>
+            </ul>
+        </li>
+        <li><strong>Network Researchers and Lab Evaluators:</strong>
+            <ul>
+                <li>Evaluate routing performance, buffer pressure distributions, and packet delivery ratios.</li>
+                <li>Tune adaptive utility weights ($w_P, w_T, w_B$), trigger multi-hop simulations, and analyze SQLite event logs.</li>
+            </ul>
+        </li>
+        <li><strong>Academic Course Evaluator (Prof. Yogita Patil):</strong>
+            <ul>
+                <li>Assesses software engineering compliance, architectural separation, and automated test suite execution (43/43 tests).</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>2.4 Operating Environment</h2>
+    <p>Minimum system requirements include:</p>
+    <ul>
+        <li><strong>RAM:</strong> 512 MB minimum (10 MB dedicated message buffer cap).</li>
+        <li><strong>Disk Space:</strong> 50 MB free local disk space for SQLite database and binaries.</li>
+        <li><strong>Network Interfaces:</strong> 802.11 b/g/n/ac Wi-Fi Network Adapter and/or Bluetooth 4.2 / 5.0+ LE Controller.</li>
+        <li><strong>Java Runtime Environment:</strong> OpenJDK / Oracle JDK 8 or higher (tested on Java 23).</li>
+        <li><strong>Operating Systems:</strong> Microsoft Windows 10/11, Ubuntu Linux 20.04/22.04 LTS, macOS, Android 10+, iOS 14+.</li>
+        <li><strong>Web Browser:</strong> Google Chrome 80+, Mozilla Firefox 75+, Apple Safari 13+, or Microsoft Edge 80+.</li>
+    </ul>
+</div>
+
+<!-- PAGE 9: SECTION 2.5 -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 9</span>
+    </div>
+
+    <h2>2.5 Design and Implementation Constraints</h2>
+    <ol>
+        <li><strong>Zero External Web Frameworks:</strong> The backend control plane must execute using standard Java SE <code>com.sun.net.httpserver.HttpServer</code> with zero third-party dependencies (no Spring Boot, Tomcat, or Node.js runtime).</li>
+        <li><strong>Architectural Separation:</strong> The routing engine must decide <em>what</em> messages to forward, while transport sockets decide <em>how</em> messages are physically transmitted.</li>
+        <li><strong>Memory Capping:</strong> The message store is strictly bounded at 10 MB ($10,485,760$ bytes) to guarantee execution stability on low-resource mobile nodes.</li>
+        <li><strong>Intermittent Link Tolerance:</strong> Physical radios may disconnect at any moment during transit; all socket operations must timeout safely without corrupting buffered data.</li>
+        <li><strong>BLE MTU Slicing:</strong> Bluetooth Low Energy links must handle default 23-byte MTU boundaries up to 512-byte negotiated frames without losing chunks or overflowing buffers.</li>
+        <li><strong>Stateless REST Communication:</strong> The web dashboard must poll state via REST JSON endpoints without requiring persistent session cookies or client-side authentication.</li>
+    </ol>
+
+    <h2>2.6 User Documentation</h2>
+    <p>The project provides comprehensive user and developer documentation:</p>
+    <ul>
+        <li><code>README.md</code>: Comprehensive setup guide, architecture breakdown, and compilation instructions.</li>
+        <li>Embedded Web Dashboard Tooltips: Interactive guidance on adaptive weight sliders, buffer metrics, and radio legends.</li>
+        <li>Interactive Terminal CLI (<code>interactive.bat</code>): Built-in help menus and syntax instructions.</li>
+        <li>Automated Test Diagnostics: Real-time console test logs verifying 43 unit and functional test assertions.</li>
+    </ul>
+
+    <h2>2.7 Assumptions and Dependencies</h2>
+    <ul>
+        <li>It is assumed that devices physically move across campus, generating opportunistic radio encounters within 10–50 meters.</li>
+        <li>It is assumed that devices have either Wi-Fi or Bluetooth radios enabled.</li>
+        <li>It is assumed that device real-time clocks are reasonably synchronized for valid message TTL comparisons.</li>
+        <li>It is assumed that local file system write permissions exist for the SQLite database at <code>database/campusmesh.db</code>.</li>
+    </ul>
+</div>
+
+<!-- PAGE 10: SECTION 3: EXTERNAL INTERFACE REQUIREMENTS -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 10</span>
+    </div>
+
+    <h1>3 External Interface Requirements</h1>
+
+    <h2>3.1 User Interfaces</h2>
+    <p>The system provides two primary user interfaces:</p>
+    <ul>
+        <li><strong>Web Control Dashboard (Port 8080):</strong>
+            <ul>
+                <li><em>Top Header & Perspective Switcher:</em> Dropdown to toggle operating views (<code>LAPTOP_WIN</code>, <code>PHONE_MOBILE</code>, <code>PHONE_AND</code>, etc.), strategy indicator, and buffer gauge.</li>
+                <li><em>HTML5 Canvas Topology Radar:</em> Displays live nodes, animated sweep beams, Wi-Fi/BLE link lines, and traveling packet animations.</li>
+                <li><em>Decision Matrix Panel:</em> Interactive sliders for $w_P$, $w_T$, $w_B$ with live utility ranking tables.</li>
+                <li><em>Message Composer:</em> Input controls for Sender, Destination, Priority (High/Med/Low), TTL slider, Copy Tokens ($L$), and payload text.</li>
+                <li><em>Store-Carry-Forward Buffer:</em> Interactive cards with real-time TTL progress bars.</li>
+                <li><em>BLE Frame Inspector:</em> Visual breakdown of 13-byte headers, chunks, and CRC32 hex values.</li>
+                <li><em>SQLite Audit Stream:</em> Real-time feed of the last 15 logged system events.</li>
+            </ul>
+        </li>
+        <li><strong>Interactive Terminal Console (CLI):</strong> Terminal-based ANSI menu providing direct command-line execution and simulation control.</li>
+    </ul>
+
+    <h2>3.2 Hardware Interfaces</h2>
+    <ul>
+        <li>Standard 802.11 b/g/n/ac Wi-Fi Network Interface Cards (NICs).</li>
+        <li>Bluetooth Low Energy 4.2 / 5.0+ Host Controller Interfaces (HCI).</li>
+        <li>Solid-state local storage for persistent SQLite database logs.</li>
+    </ul>
+
+    <h2>3.3 Software Interfaces</h2>
+    <ul>
+        <li>Java Virtual Machine (JVM): Java SE 8 or higher.</li>
+        <li>SQLite Relational Database: Accessed via <code>sqlite-jdbc-3.36.0.3.jar</code>.</li>
+        <li>Embedded HTTP Server: <code>com.sun.net.httpserver.HttpServer</code>.</li>
+        <li>Web Browsers: HTML5 Canvas 2D API, Fetch API, and LocalStorage API.</li>
+    </ul>
+
+    <h2>3.4 Communications Interfaces</h2>
+    <ul>
+        <li><strong>Wi-Fi TCP Streaming:</strong> 4-byte big-endian length prefix followed by UTF-8 JSON payload.</li>
+        <li><strong>Wi-Fi Subnet Multicast:</strong> UDP beacons on <code>239.255.77.88:5354</code> every 5 seconds.</li>
+        <li><strong>Bluetooth LE GATT:</strong> Service UUID <code>0000FE60</code>, 13-byte self-describing binary headers, CRC32 error detection.</li>
+        <li><strong>REST HTTP API:</strong> JSON endpoints on port 8080 supporting Cross-Origin Resource Sharing (CORS).</li>
+    </ul>
+</div>
+
+<!-- PAGE 11: SECTION 4: SYSTEM FEATURES (4.1 & 4.2) -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 11</span>
+    </div>
+
+    <h1>4 System Features</h1>
+
+    <h2>4.1 Autonomous Peer Discovery (Wi-Fi mDNS & Subnet UDP Beaconing)</h2>
+    <h3>4.1.1 Description and Priority</h3>
+    <p>Enables zero-configuration proximity discovery across local Wi-Fi networks without requiring central directory infrastructure. <strong>Priority: High.</strong></p>
+
+    <h3>4.1.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Node initializes <code>DiscoveryManager</code> on startup.</li>
+        <li><code>WifiDiscoveryService</code> binds to multicast address <code>239.255.77.88:5354</code>.</li>
+        <li>Background thread broadcasts JSON discovery beacons every 5 seconds.</li>
+        <li>Neighboring nodes parse beacon metadata and update <code>PeerRegistry</code>.</li>
+        <li>Nodes not heard from within 15 seconds are purged as stale.</li>
+    </ol>
+
+    <h3>4.1.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.1.1:</span> The system shall broadcast JSON UDP discovery beacons to <code>239.255.77.88:5354</code> every 5000 ms.</li>
+        <li><span class="badge-req">FR-4.1.2:</span> The system shall parse inbound beacons and register peer ID, platform, IP address, port, and transports in <code>PeerRegistry</code>.</li>
+        <li><span class="badge-req">FR-4.1.3:</span> The system shall evict peer entries whose last seen timestamp exceeds 15000 ms.</li>
+    </ul>
+
+    <h2>4.2 Opportunistic Bluetooth Low Energy (BLE) Radio Discovery</h2>
+    <h3>4.2.1 Description and Priority</h3>
+    <p>Discovers adjacent physical nodes in complete Wi-Fi dead zones via BLE advertisements. <strong>Priority: High.</strong></p>
+
+    <h3>4.2.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Node activates BLE peripheral service advertising UUID <code>0000FE60</code>.</li>
+        <li>Scanning nodes detect service and connect to GATT server.</li>
+        <li>Scanning node reads Characteristic <code>0000FE61</code> to obtain peer identity.</li>
+        <li>Peer is merged into <code>PeerRegistry</code> with transport capability <code>BLE</code>.</li>
+    </ol>
+
+    <h3>4.2.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.2.1:</span> The system shall broadcast BLE advertisements specifying Service UUID <code>0000FE60-0000-1000-8000-00805F9B34FB</code>.</li>
+        <li><span class="badge-req">FR-4.2.2:</span> The system shall query Characteristic <code>0000FE61</code> to ingest remote peer metadata.</li>
+        <li><span class="badge-req">FR-4.2.3:</span> The system shall merge multi-transport capabilities into a unified peer record.</li>
+    </ul>
+</div>
+
+<!-- PAGE 12: SECTION 4.3 & 4.4 -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 12</span>
+    </div>
+
+    <h2>4.3 Store–Carry–Forward Message Buffer Management</h2>
+    <h3>4.3.1 Description and Priority</h3>
+    <p>Maintains persistent in-memory message storage while nodes transit between network partitions. <strong>Priority: High.</strong></p>
+
+    <h3>4.3.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Message arrives via local creation or socket reception.</li>
+        <li>Buffer verifies that <code>messageId</code> is not a duplicate.</li>
+        <li>Buffer verifies remaining TTL is positive.</li>
+        <li>Buffer checks capacity (10 MB cap) and commits message.</li>
+        <li>Querying the buffer triggers automatic purging of expired messages.</li>
+    </ol>
+
+    <h3>4.3.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.3.1:</span> The system shall strictly enforce a 10 MB ($10,485,760$ bytes) upper storage boundary.</li>
+        <li><span class="badge-req">FR-4.3.2:</span> The system shall reject duplicate messages possessing an identical <code>messageId</code>.</li>
+        <li><span class="badge-req">FR-4.3.3:</span> The system shall calculate $\text{remainingTTL} = \text{expiresAt} - \text{now}$ and purge expired entries automatically.</li>
+    </ul>
+
+    <h2>4.4 Dynamic Routing Engine (Epidemic, Spray-and-Wait, Adaptive Utility)</h2>
+    <h3>4.4.1 Description and Priority</h3>
+    <p>Selects which messages to forward across an active encounter based on the active strategy. <strong>Priority: High.</strong></p>
+
+    <h3>4.4.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Encounter begins with remote peer $P$.</li>
+        <li>Routing engine queries active strategy with candidate messages.</li>
+        <li>Under Epidemic, all unreceived messages are forwarded.</li>
+        <li>Under Spray-and-Wait, copy tokens are halved until $L=1$.</li>
+        <li>Under Adaptive, candidates are ranked by multi-metric utility score $U(M)$.</li>
+    </ol>
+
+    <h3>4.4.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.4.1:</span> The system shall support runtime switching between Epidemic, Spray-and-Wait, and Adaptive routing.</li>
+        <li><span class="badge-req">FR-4.4.2:</span> In Spray-and-Wait, messages with $L > 1$ tokens shall split tokens binary ($\lfloor L/2 \rfloor$ sent, $\lceil L/2 \rceil$ kept); messages with $L = 1$ shall forward only to final destination.</li>
+        <li><span class="badge-req">FR-4.4.3:</span> In Adaptive routing, utility shall be calculated as $U(M) = w_P \cdot P(M) + w_T \cdot T(M) + w_B \cdot B(M)$, where $w_P + w_T + w_B = 1.00$.</li>
+    </ul>
+</div>
+
+<!-- PAGE 13: SECTION 4.5 & 4.6 -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 13</span>
+    </div>
+
+    <h2>4.5 Multi-Transport Message Dispatch & Socket Streaming (TCP)</h2>
+    <h3>4.5.1 Description and Priority</h3>
+    <p>Transfers DTN messages over physical Wi-Fi TCP sockets using stream-safe framing. <strong>Priority: High.</strong></p>
+
+    <h3>4.5.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Routing engine designates message for dispatch.</li>
+        <li>Socket connects to remote peer IP and port.</li>
+        <li>System prepends a 4-byte big-endian length prefix.</li>
+        <li>System writes serialized UTF-8 JSON payload bytes.</li>
+        <li>Remote receiver reads exact length via <code>readFully()</code>.</li>
+    </ol>
+
+    <h3>4.5.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.5.1:</span> The system shall frame all TCP payloads with a 4-byte big-endian integer length header.</li>
+        <li><span class="badge-req">FR-4.5.2:</span> Receiving sockets shall ingest the exact stream length indicated by the header.</li>
+    </ul>
+
+    <h2>4.6 Bluetooth Low Energy GATT MTU Chunking & CRC32 Reassembly</h2>
+    <h3>4.6.1 Description and Priority</h3>
+    <p>Slices messages into MTU-compliant BLE GATT packets and reassembles them with CRC32 verification. <strong>Priority: High.</strong></p>
+
+    <h3>4.6.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Payload is partitioned into chunk payloads of size $\text{MTU} - 13$.</li>
+        <li>13-byte headers containing Transfer ID, Chunk Index, and CRC32 are prepended.</li>
+        <li>Chunks are transmitted sequentially over Characteristic <code>0000FE62</code>.</li>
+        <li>Receiver reassembles chunks and verifies CRC32 checksum before buffer ingestion.</li>
+    </ol>
+
+    <h3>4.6.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.6.1:</span> The system shall attach a 13-byte header to every BLE chunk (magic bytes <code>0x43 0x4D</code>, version <code>0x02</code>, TxID, Index, Total, CRC32).</li>
+        <li><span class="badge-req">FR-4.6.2:</span> The receiver shall verify end-to-end CRC32 checksums, rejecting corrupted transmissions.</li>
+    </ul>
+</div>
+
+<!-- PAGE 14: SECTION 4.7 & 4.8 -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 14</span>
+    </div>
+
+    <h2>4.7 Persistent Event Logging & SQLite Audit Trail</h2>
+    <h3>4.7.1 Description and Priority</h3>
+    <p>Maintains a queryable relational audit log of all system transitions and routing actions. <strong>Priority: Medium.</strong></p>
+
+    <h3>4.7.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>System event occurs (e.g., <code>MESSAGE_FORWARDED</code>).</li>
+        <li>Event details are dispatched to <code>EventLogger</code>.</li>
+        <li>Thread-safe SQLite connection writes record into table <code>events</code>.</li>
+        <li>Record is queryable via REST endpoint <code>GET /api/events</code>.</li>
+    </ol>
+
+    <h3>4.7.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.7.1:</span> The system shall persist audit events in local SQLite file <code>database/campusmesh.db</code>.</li>
+        <li><span class="badge-req">FR-4.7.2:</span> Table <code>events</code> shall record timestamp, event type, peer ID, message ID, remote peer ID, and metadata JSON.</li>
+    </ul>
+
+    <h2>4.8 Embedded HTTP REST API Server & Web Control Plane</h2>
+    <h3>4.8.1 Description and Priority</h3>
+    <p>Serves the web dashboard and REST API endpoints using standard JDK libraries on port 8080. <strong>Priority: High.</strong></p>
+
+    <h3>4.8.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Server binds to <code>0.0.0.0:8080</code>.</li>
+        <li>Web browser requests dashboard assets (HTML/CSS/JS).</li>
+        <li>Browser polling loop fetches <code>/api/status</code>, <code>/api/peers</code>, and <code>/api/buffer</code> every 1.5 seconds.</li>
+    </ol>
+
+    <h3>4.8.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.8.1:</span> The server shall operate without external web dependencies using <code>com.sun.net.httpserver.HttpServer</code>.</li>
+        <li><span class="badge-req">FR-4.8.2:</span> The server shall provide REST JSON endpoints for status, peers, buffer, routing strategy, and event inspection.</li>
+    </ul>
+</div>
+
+<!-- PAGE 15: SECTION 4.9 & 4.10 -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 15</span>
+    </div>
+
+    <h2>4.9 Interactive Real-Time Topology Radar & Network Simulation</h2>
+    <h3>4.9.1 Description and Priority</h3>
+    <p>Renders an interactive HTML5 canvas radar displaying live mesh topology, animated link beams, and packet hops. <strong>Priority: Medium.</strong></p>
+
+    <h3>4.9.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Dashboard initializes canvas radar rendering at 60 FPS.</li>
+        <li>Nodes and links (Wi-Fi dashed cyan, BLE dashed purple) are rendered radially.</li>
+        <li>User clicks "Run Multi-Hop Demo"; backend executes 4-node simulation.</li>
+        <li>Animated blue packets travel between nodes across the canvas.</li>
+    </ol>
+
+    <h3>4.9.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.9.1:</span> The canvas radar shall render sweeping beams and dynamic links at 60 FPS.</li>
+        <li><span class="badge-req">FR-4.9.2:</span> Clicking any node on the canvas shall automatically set it as the message composer destination.</li>
+    </ul>
+
+    <h2>4.10 Device Perspective Switching & Autonomous Mobile Node Identification</h2>
+    <h3>4.10.1 Description and Priority</h3>
+    <p>Allows any connected device to operate under its own identity, auto-detecting mobile devices over Wi-Fi. <strong>Priority: High.</strong></p>
+
+    <h3>4.10.2 Stimulus/Response Sequences</h3>
+    <ol>
+        <li>Mobile phone opens <code>http://&lt;laptop-ip&gt;:8080</code>.</li>
+        <li>Backend identifies remote client IP and auto-registers <code>PHONE_MOBILE</code> in <code>PeerRegistry</code>.</li>
+        <li>Frontend detects mobile User-Agent / remote flag and sets operating perspective to <code>PHONE_MOBILE</code>.</li>
+        <li>Radar canvas displays <code>PHONE_MOBILE (YOU)</code> glowing in vibrant green.</li>
+        <li>Composer pre-populates <code>Sender: PHONE_MOBILE</code> and <code>Destination: LAPTOP_WIN</code>.</li>
+    </ol>
+
+    <h3>4.10.3 Functional Requirements</h3>
+    <ul>
+        <li><span class="badge-req">FR-4.10.1:</span> The backend shall detect remote client IP addresses and auto-register <code>PHONE_MOBILE</code> as a discovered peer.</li>
+        <li><span class="badge-req">FR-4.10.2:</span> The frontend shall allow switching active perspectives via the top navbar dropdown, persisting preference in <code>localStorage</code>.</li>
+        <li><span class="badge-req">FR-4.10.3:</span> The radar canvas shall dynamically render the glowing green local node indicator on the active perspective node.</li>
+    </ul>
+</div>
+
+<!-- PAGE 16: SECTION 5 & 6 -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 16</span>
+    </div>
+
+    <h1>5 Other Nonfunctional Requirements</h1>
+
+    <h2>5.1 Performance Requirements</h2>
+    <ul>
+        <li><strong>Buffer Latency:</strong> Message buffer queries, insertions, and duplicate checks shall complete within 5 ms for up to 1,000 entries.</li>
+        <li><strong>Adaptive Calculation Speed:</strong> Ranking 100 candidate messages in the decision matrix shall complete in under 2 ms.</li>
+        <li><strong>Socket Throughput:</strong> TCP length-prefixed streaming over Wi-Fi shall achieve up to 10 MB/s transfer speeds.</li>
+        <li><strong>BLE Slicing Latency:</strong> Chunking a 10 KB payload with CRC32 computation shall take less than 20 ms.</li>
+    </ul>
+
+    <h2>5.2 Safety Requirements</h2>
+    <ul>
+        <li><strong>Memory Safety:</strong> Strict 10 MB buffer capacity prevents JVM heap exhaustion.</li>
+        <li><strong>Loop Prevention:</strong> Spray-and-Wait token splitting guarantees finite replication, avoiding infinite broadcast loops.</li>
+    </ul>
+
+    <h2>5.3 Security Requirements</h2>
+    <ul>
+        <li><strong>Payload Integrity:</strong> CRC32 checksums verify data integrity across lossy radio links.</li>
+        <li><strong>Stream Protection:</strong> 4-byte length prefixes prevent TCP boundary injection attacks.</li>
+        <li><strong>Zero Telemetry:</strong> No user data or telemetry is leaked to external internet entities.</li>
+    </ul>
+
+    <h2>5.4 Software Quality Attributes</h2>
+    <ul>
+        <li><strong>Usability:</strong> Intuitive web dashboard requiring no technical terminal knowledge.</li>
+        <li><strong>Reliability:</strong> Graceful socket timeout recovery; unsent messages remain buffered for subsequent encounters.</li>
+        <li><strong>Maintainability:</strong> Clean modular architecture separating routing, transport, buffer, discovery, and logging.</li>
+        <li><strong>Portability:</strong> Identical execution across Windows, Linux, Android, and iOS.</li>
+    </ul>
+
+    <h2>5.5 Business Rules</h2>
+    <ul>
+        <li><strong>BR-1:</strong> Spray-and-Wait messages with $L=1$ token shall only be delivered to their final destination node.</li>
+        <li><strong>BR-2:</strong> Expired messages ($\text{remainingTTL} \le 0$) shall never be forwarded or accepted.</li>
+        <li><strong>BR-3:</strong> Adaptive routing weights must strictly sum to unity ($w_P + w_T + w_B = 1.00$).</li>
+    </ul>
+
+    <h1>6 Other Requirements</h1>
+    <p>The system provides SQLite audit log export to JSON/CSV, a buffer reset option, WCAG 2.1 Level AA color contrast compliance, and full academic satisfaction for the SPIT Mini Project curriculum.</p>
+</div>
+
+<!-- PAGE 17: APPENDIX A: GLOSSARY -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 17</span>
+    </div>
+
+    <h1>Appendix A: Glossary</h1>
+    <table class="standard-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;">Sr. No.</th>
+                <th style="width: 20%;">Term</th>
+                <th style="width: 70%;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td><strong>DTN</strong></td><td>Delay-Tolerant Networking: An architecture for communication across challenged and intermittently connected networks.</td></tr>
+            <tr><td>2</td><td><strong>Store–Carry–Forward</strong></td><td>The routing paradigm where nodes physically carry stored message bundles between disconnected partitions.</td></tr>
+            <tr><td>3</td><td><strong>P2P</strong></td><td>Peer-to-Peer: Decentralized architecture where all nodes hold symmetric routing privileges.</td></tr>
+            <tr><td>4</td><td><strong>mDNS</strong></td><td>Multicast DNS: Zero-configuration protocol for discovering hostnames and services on local subnets.</td></tr>
+            <tr><td>5</td><td><strong>BLE</strong></td><td>Bluetooth Low Energy: Low-power wireless radio technology for short-range ad-hoc communication.</td></tr>
+            <tr><td>6</td><td><strong>GATT</strong></td><td>Generic Attribute Profile: BLE specification defining Service and Characteristic data structures.</td></tr>
+            <tr><td>7</td><td><strong>MTU</strong></td><td>Maximum Transmission Unit: Maximum physical packet size allowable across a link (23 to 512 bytes).</td></tr>
+            <tr><td>8</td><td><strong>CRC32</strong></td><td>Cyclic Redundancy Check 32-bit: Polynomial checksum verifying packet integrity over wireless channels.</td></tr>
+            <tr><td>9</td><td><strong>TTL</strong></td><td>Time-To-Live: Duration in seconds before a message bundle expires and is evicted from memory.</td></tr>
+            <tr><td>10</td><td><strong>Epidemic</strong></td><td>Flooding DTN algorithm replicating messages to every newly encountered peer.</td></tr>
+            <tr><td>11</td><td><strong>Spray-and-Wait</strong></td><td>Controlled replication protocol spraying $L$ copies via binary token splitting before waiting for destination.</td></tr>
+            <tr><td>12</td><td><strong>Adaptive</strong></td><td>Utility-based routing ranking candidate messages by Priority ($P$), Urgency ($T$), and Buffer Pressure ($B$).</td></tr>
+            <tr><td>13</td><td><strong>REST</strong></td><td>Representational State Transfer: Architectural style utilizing HTTP methods and JSON data exchange.</td></tr>
+            <tr><td>14</td><td><strong>SRS</strong></td><td>Software Requirements Specification: Formal technical document outlining software behavior.</td></tr>
+            <tr><td>15</td><td><strong>SPIT</strong></td><td>Sardar Patel Institute of Technology: Autonomous engineering college in Andheri (W), Mumbai.</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGE 18: APPENDIX B: ANALYSIS MODELS (USE CASES 1 TO 6) -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 18</span>
+    </div>
+
+    <h1>Appendix B: Analysis Models</h1>
+    <p><em>The use cases below serve as the formal analysis model for the system, directly cross-referenced from Section 4.</em></p>
+
+    <h3>Use Case 1: Autonomous Peer Discovery via Wi-Fi Beacon</h3>
+    <p><strong>Actor:</strong> Participating Campus Node</p>
+    <p><strong>Description:</strong> Node discovers adjacent peers across the local Wi-Fi subnet without manual configuration.</p>
+    <p><strong>Steps:</strong> (1) Node starts <code>WifiDiscoveryService</code>; (2) Joins multicast group <code>239.255.77.88:5354</code>; (3) Emits periodic UDP beacons; (4) Remote peers record node in <code>PeerRegistry</code>; (5) Active encounter is notified to <code>ContactManager</code>.</p>
+
+    <h3>Use Case 2: BLE Service Discovery and Handshake</h3>
+    <p><strong>Actor:</strong> BLE-Enabled Mobile / Laptop Node</p>
+    <p><strong>Description:</strong> Node detects nearby devices using Bluetooth Low Energy advertising and GATT characteristics.</p>
+    <p><strong>Steps:</strong> (1) Advertises Service UUID <code>0000FE60</code>; (2) Remote scanner connects to GATT server; (3) Reads Characteristic <code>0000FE61</code> to ingest identity; (4) Peer is registered with transport <code>BLE</code> in local registry.</p>
+
+    <h3>Use Case 3: Enqueue and Store Message in Local Buffer</h3>
+    <p><strong>Actor:</strong> Campus User / System Node</p>
+    <p><strong>Description:</strong> A new message is created and committed to the bounded local DTN buffer.</p>
+    <p><strong>Steps:</strong> (1) User composes message; (2) Buffer verifies message is not duplicate; (3) Verifies TTL is valid; (4) Confirms capacity $\le 10\text{ MB}$; (5) Commits entry and logs <code>MESSAGE_CREATED</code> to SQLite.</p>
+
+    <h3>Use Case 4: Evaluate Candidates via Adaptive Routing Matrix</h3>
+    <p><strong>Actor:</strong> Routing Engine</p>
+    <p><strong>Description:</strong> Evaluates all buffered messages to rank forwarding candidates during an encounter.</p>
+    <p><strong>Steps:</strong> (1) Contact encounter begins; (2) Engine queries <code>AdaptiveRouter</code>; (3) Computes $P, T, B$ and utility $U(M) = w_P \cdot P + w_T \cdot T + w_B \cdot B$; (4) Sorts candidates descending by utility; (5) Dispatches top candidates.</p>
+
+    <h3>Use Case 5: Deliver Message via Length-Prefixed TCP Stream</h3>
+    <p><strong>Actor:</strong> Transport Layer</p>
+    <p><strong>Description:</strong> Transfers an outbound message to a discovered peer over a direct Wi-Fi TCP socket.</p>
+    <p><strong>Steps:</strong> (1) Opens TCP socket to remote peer; (2) Writes 4-byte big-endian integer length; (3) Streams JSON payload bytes; (4) Receiver ingests payload with <code>readFully()</code>; (5) Logs <code>MESSAGE_FORWARDED</code> to SQLite.</p>
+
+    <h3>Use Case 6: Chunk and Reassemble BLE GATT Transmission</h3>
+    <p><strong>Actor:</strong> BLE Transport Layer</p>
+    <p><strong>Description:</strong> Slices large DTN messages into MTU chunks and reassembles them with CRC32 verification.</p>
+    <p><strong>Steps:</strong> (1) Slices payload into chunks matching MTU; (2) Attaches 13-byte headers and CRC32; (3) Sends chunks over Characteristic <code>0000FE62</code>; (4) Receiver verifies CRC32; (5) Commits payload to buffer.</p>
+</div>
+
+<!-- PAGE 19: APPENDIX B (USE CASES 7 TO 11) -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 19</span>
+    </div>
+
+    <h3>Use Case 7: Audit Event Logging to SQLite Database</h3>
+    <p><strong>Actor:</strong> System Logging Subsystem</p>
+    <p><strong>Description:</strong> Records node lifecycle, encounters, and routing decisions into relational SQLite tables.</p>
+    <p><strong>Steps:</strong> (1) Event is triggered; (2) Parameters sent to <code>EventLogger</code>; (3) Transaction written to table <code>events</code>; (4) Event stream appears in web dashboard.</p>
+
+    <h3>Use Case 8: Inspect and Control Node via Web Dashboard</h3>
+    <p><strong>Actor:</strong> Campus User / Researcher</p>
+    <p><strong>Description:</strong> User monitors node metrics, buffer status, and radar links via web browser.</p>
+    <p><strong>Steps:</strong> (1) Opens <code>http://localhost:8080</code>; (2) Server returns dashboard assets; (3) Radar renders live links; (4) User adjusts adaptive sliders; (5) Server updates weights in real time.</p>
+
+    <h3>Use Case 9: Execute Automated Multi-Hop Mesh Simulation</h3>
+    <p><strong>Actor:</strong> Network Researcher / Evaluator</p>
+    <p><strong>Description:</strong> Runs an automated simulation demonstrating multi-hop message forwarding.</p>
+    <p><strong>Steps:</strong> (1) Triggers simulation button; (2) Backend executes hops across 4 nodes; (3) Blue animated packets traverse radar; (4) Multi-hop events recorded in SQLite.</p>
+
+    <h3>Use Case 10: Auto-Detect Mobile Client and Invert Perspective</h3>
+    <p><strong>Actor:</strong> Mobile Phone User</p>
+    <p><strong>Description:</strong> Mobile browser connects to laptop server and operates under its own identity.</p>
+    <p><strong>Steps:</strong> (1) Mobile opens dashboard via Wi-Fi IP; (2) Server registers <code>PHONE_MOBILE</code>; (3) Radar highlights <code>PHONE_MOBILE (YOU)</code>; (4) Composer defaults to <code>Sender: PHONE_MOBILE</code>, <code>Destination: LAPTOP_WIN</code>; (5) Message sent from phone buffers correctly.</p>
+
+    <h3>Use Case 11: Evaluate SRS and System Test Compliance</h3>
+    <p><strong>Actor:</strong> Academic Course Evaluator (Prof. Yogita Patil)</p>
+    <p><strong>Description:</strong> Evaluator verifies software execution, test suite passes, and requirement compliance.</p>
+    <p><strong>Steps:</strong> (1) Runs <code>build.bat</code>; (2) Executes test suites (43/43 tests); (3) Verifies 100% pass rate; (4) Audits SRS document for academic grading.</p>
+</div>
+
+<!-- PAGE 20: APPENDIX C: DATA DICTIONARY -->
+<div class="page">
+    <div class="header-running">
+        <span>Software Requirements Specification for CampusMesh</span>
+        <span>Page 20</span>
+    </div>
+
+    <h1>Appendix C: Data Dictionary</h1>
+    <table class="standard-table">
+        <thead>
+            <tr>
+                <th style="width: 18%;">Name</th>
+                <th style="width: 14%;">Type</th>
+                <th style="width: 16%;">Category</th>
+                <th style="width: 22%;">Possible Values</th>
+                <th style="width: 30%;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><code>messageId</code></td><td>String</td><td>State Variable</td><td>e.g., "M001", "M1_4920"</td><td>Globally unique identifier for each message bundle.</td></tr>
+            <tr><td><code>sourceId</code></td><td>String</td><td>State Variable</td><td>"LAPTOP_WIN", "PHONE_MOBILE"</td><td>Peer identifier of the originating sender node.</td></tr>
+            <tr><td><code>destinationId</code></td><td>String</td><td>State Variable</td><td>"LAPTOP_UBU", "BROADCAST"</td><td>Intended destination node ID or broadcast identifier.</td></tr>
+            <tr><td><code>priority</code></td><td>Enum</td><td>State Variable</td><td>LOW, MEDIUM, HIGH</td><td>Priority classification determining routing factor $P(M)$.</td></tr>
+            <tr><td><code>priorityWeight</code></td><td>Double</td><td>Derived Value</td><td>0.33, 0.67, 1.00</td><td>Numeric priority weight used in adaptive utility scoring.</td></tr>
+            <tr><td><code>payload</code></td><td>String</td><td>Input / State</td><td>UTF-8 text string</td><td>Textual content transported across the mesh.</td></tr>
+            <tr><td><code>createdAt</code></td><td>Instant</td><td>State Variable</td><td>ISO-8601 UTC</td><td>Timestamp when message was initially generated.</td></tr>
+            <tr><td><code>expiresAt</code></td><td>Instant</td><td>State Variable</td><td>ISO-8601 UTC</td><td>Timestamp when message expires and becomes invalid.</td></tr>
+            <tr><td><code>ttlSeconds</code></td><td>Long</td><td>Parameter</td><td>60 to 86400 seconds</td><td>Total initial lifespan duration assigned to message.</td></tr>
+            <tr><td><code>remainingTTL</code></td><td>Long</td><td>Derived Value</td><td>$\ge 0$ seconds</td><td>Live remaining validity seconds before eviction.</td></tr>
+            <tr><td><code>copyTokens</code></td><td>Integer</td><td>State Variable</td><td>1 to 16 (default: 4)</td><td>Spray-and-Wait replication tokens remaining ($L$).</td></tr>
+            <tr><td><code>peerId</code></td><td>String</td><td>State Variable</td><td>"LAPTOP_WIN", "PHONE_AND"</td><td>Unique identifier representing a participating node.</td></tr>
+            <tr><td><code>platform</code></td><td>String</td><td>Metadata</td><td>WINDOWS, ANDROID, IOS, UBUNTU</td><td>Operating system environment of the node.</td></tr>
+            <tr><td><code>ipAddress</code></td><td>String</td><td>Network State</td><td>Valid IPv4/IPv6 address</td><td>Network IP address for Wi-Fi TCP socket connections.</td></tr>
+            <tr><td><code>port</code></td><td>Integer</td><td>Network State</td><td>1024 to 65535</td><td>TCP port number for sockets and HTTP dashboard.</td></tr>
+            <tr><td><code>wP</code></td><td>Double</td><td>Parameter</td><td>0.00 to 1.00 (default: 0.40)</td><td>Adaptive weight assigned to Priority Factor.</td></tr>
+            <tr><td><code>wT</code></td><td>Double</td><td>Parameter</td><td>0.00 to 1.00 (default: 0.40)</td><td>Adaptive weight assigned to TTL Urgency Factor.</td></tr>
+            <tr><td><code>wB</code></td><td>Double</td><td>Parameter</td><td>0.00 to 1.00 (default: 0.20)</td><td>Adaptive weight assigned to Buffer Pressure Factor.</td></tr>
+            <tr><td><code>utility</code></td><td>Double</td><td>Derived Value</td><td>0.00 to 1.00</td><td>Overall forwarding score $U(M) = w_P P + w_T T + w_B B$.</td></tr>
+            <tr><td><code>bufferCapacity</code></td><td>Long</td><td>Constant</td><td>10,485,760 bytes (10 MB)</td><td>Strict upper memory cap for local storage.</td></tr>
+            <tr><td><code>bufferUsedBytes</code></td><td>Long</td><td>State Variable</td><td>0 to 10,485,760 bytes</td><td>Total bytes currently occupied in message buffer.</td></tr>
+            <tr><td><code>crc32Checksum</code></td><td>Long</td><td>Checksum</td><td>32-bit unsigned integer</td><td>CRC32 polynomial checksum verifying BLE chunk integrity.</td></tr>
+            <tr><td><code>activeNodeId</code></td><td>String</td><td>UI State</td><td>"LAPTOP_WIN", "PHONE_MOBILE"</td><td>Current operating identity active on this device.</td></tr>
+        </tbody>
+    </table>
+
+    <h1>Appendix D: To Be Determined (TBD) List</h1>
+    <p>No TBD (To Be Determined) items are currently identified in this document. All architectural parameters, radio interface specifications, routing equations, external protocols, and verification criteria have been fully specified and validated as of Version 1.0. This appendix will be updated with a numbered list of any TBD markers introduced in future revisions.</p>
+</div>
+
+</body>
+</html>
