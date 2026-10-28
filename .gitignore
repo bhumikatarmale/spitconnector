@@ -19,3 +19,7 @@ desktop.ini
 
 # Temporary logs
 *.log
+
+# Environment variables
+.env
+.env.local

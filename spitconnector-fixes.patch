@@ -1,0 +1,286 @@
+diff --git a/MiniProject/build.bat b/MiniProject/build.bat
+index 28b1b1d..2d2950f 100644
+--- a/MiniProject/build.bat
++++ b/MiniProject/build.bat
+@@ -4,6 +4,12 @@ echo ========================================
+ echo Compiling CampusMesh Backend...
+ echo ========================================
+ 
++where javac >nul 2>nul
++if errorlevel 1 (
++    echo [ERROR] javac not found. Install a JDK ^(Java 11+^), not just a JRE, and add it to PATH.
++    exit /b 1
++)
++
+ if not exist bin mkdir bin
+ if not exist database mkdir database
+ 
+diff --git a/MiniProject/build.sh b/MiniProject/build.sh
+new file mode 100755
+index 0000000..768170d
+--- /dev/null
++++ b/MiniProject/build.sh
+@@ -0,0 +1,8 @@
++#!/usr/bin/env bash
++# Linux/macOS build script (equivalent of build.bat)
++set -e
++cd "$(dirname "$0")"
++command -v javac >/dev/null || { echo "[ERROR] JDK not found (need javac, Java 11+). Install a JDK, not just a JRE."; exit 1; }
++mkdir -p bin database
++javac -cp "lib/*:src" -d bin $(find src -name '*.java')
++echo "[SUCCESS] Compilation finished with 0 errors."
+diff --git a/MiniProject/run-web.sh b/MiniProject/run-web.sh
+new file mode 100755
+index 0000000..535b09f
+--- /dev/null
++++ b/MiniProject/run-web.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++cd "$(dirname "$0")"
++[ -f bin/campusmesh/web/CampusMeshWebRunner.class ] || ./build.sh || exit 1
++exec java -cp "bin:lib/*" campusmesh.web.CampusMeshWebRunner 8080 "${1:-LAPTOP_LINUX}" --public
+diff --git a/MiniProject/src/campusmesh/discovery/wifi/WifiDiscoveryService.java b/MiniProject/src/campusmesh/discovery/wifi/WifiDiscoveryService.java
+index 482aaa0..79e5aab 100644
+--- a/MiniProject/src/campusmesh/discovery/wifi/WifiDiscoveryService.java
++++ b/MiniProject/src/campusmesh/discovery/wifi/WifiDiscoveryService.java
+@@ -159,10 +159,23 @@ public class WifiDiscoveryService implements DiscoveryService {
+             this.beaconSocket.setReuseAddress(true);
+ 
+             // Join multicast group across active network interfaces
++            // Join on every usable interface (Windows often has VPN/WSL/VirtualBox adapters that
++            // would otherwise win the default-interface choice and hide the real Wi-Fi/hotspot NIC).
++            boolean joined = false;
+             try {
+-                beaconSocket.joinGroup(beaconGroup);
+-            } catch (Exception e) {
+-                // In some OS/network configurations, joinGroup on specific interface is needed
++                Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
++                while (nics.hasMoreElements()) {
++                    NetworkInterface nic = nics.nextElement();
++                    try {
++                        if (nic.isUp() && nic.supportsMulticast() && !nic.isLoopback() && nic.getInetAddresses().hasMoreElements()) {
++                            beaconSocket.joinGroup(new java.net.InetSocketAddress(beaconGroup, MULTICAST_PORT), nic);
++                            joined = true;
++                        }
++                    } catch (Exception ignored) {}
++                }
++            } catch (Exception ignored) {}
++            if (!joined) {
++                try { beaconSocket.joinGroup(beaconGroup); } catch (Exception ignored) {}
+             }
+ 
+             // Start background receiver thread
+@@ -199,7 +212,19 @@ public class WifiDiscoveryService implements DiscoveryService {
+             );
+             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+             DatagramPacket packet = new DatagramPacket(bytes, bytes.length, beaconGroup, MULTICAST_PORT);
+-            beaconSocket.send(packet);
++            boolean sent = false;
++            Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
++            while (nics.hasMoreElements()) {
++                NetworkInterface nic = nics.nextElement();
++                try {
++                    if (nic.isUp() && nic.supportsMulticast() && !nic.isLoopback() && nic.getInetAddresses().hasMoreElements()) {
++                        beaconSocket.setNetworkInterface(nic);
++                        beaconSocket.send(packet);
++                        sent = true;
++                    }
++                } catch (IOException ignored) {}
++            }
++            if (!sent) beaconSocket.send(packet);
+         } catch (IOException ignored) {}
+     }
+ 
+@@ -260,6 +285,11 @@ public class WifiDiscoveryService implements DiscoveryService {
+     }
+ 
+     private static InetAddress getPreferredLocalAddress() {
++        try (java.net.DatagramSocket ds = new java.net.DatagramSocket()) {
++            ds.connect(InetAddress.getByName("192.0.2.1"), 9);
++            InetAddress a = ds.getLocalAddress();
++            if (a != null && !a.isAnyLocalAddress() && !a.isLoopbackAddress()) return a;
++        } catch (Exception ignored) {}
+         try {
+             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+             while (interfaces.hasMoreElements()) {
+diff --git a/MiniProject/src/campusmesh/web/CampusMeshHttpServer.java b/MiniProject/src/campusmesh/web/CampusMeshHttpServer.java
+index f6f9a81..6f26e6e 100644
+--- a/MiniProject/src/campusmesh/web/CampusMeshHttpServer.java
++++ b/MiniProject/src/campusmesh/web/CampusMeshHttpServer.java
+@@ -232,7 +232,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
+             root.addProperty("bufferMaxBytes", buffer.getCapacityBytes());
+             root.addProperty("bufferPressure", Double.parseDouble(String.format(java.util.Locale.US, "%.4f", buffer.getBufferPressure())));
+             root.addProperty("uptimeSeconds", (System.currentTimeMillis() - startTime) / 1000);
+-            root.addProperty("apiToken", apiToken);
++            if (!isRemote) root.addProperty("apiToken", apiToken); // remote devices must use the #token= link printed in the console
+ 
+             JsonArray contactsArr = new JsonArray();
+             for (Peer p : contactManager.getActiveContacts()) {
+@@ -741,7 +741,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
+             File canonicalRoot = webRoot.getCanonicalFile();
+             File target = new File(canonicalRoot, path.replace("/", File.separator)).getCanonicalFile();
+ 
+-            if (!target.getPath().startsWith(canonicalRoot.getPath())) {
++            if (!target.getPath().equals(canonicalRoot.getPath()) && !target.getPath().startsWith(canonicalRoot.getPath() + File.separator)) {
+                 sendError(exchange, 403, "FORBIDDEN", "Path traversal forbidden: " + path);
+                 return;
+             }
+@@ -770,19 +770,27 @@ public class CampusMeshHttpServer implements AutoCloseable {
+     // ------------------------------------------------------------------------
+ 
+     public static String getLocalLanIp() {
++        // 1) Ask the OS which address it would use to reach the LAN (skips VirtualBox/WSL/Hyper-V adapters).
++        try (java.net.DatagramSocket ds = new java.net.DatagramSocket()) {
++            ds.connect(java.net.InetAddress.getByName("192.0.2.1"), 9); // no packet is sent
++            java.net.InetAddress a = ds.getLocalAddress();
++            if (a != null && !a.isAnyLocalAddress() && !a.isLoopbackAddress()) {
++                return a.getHostAddress();
++            }
++        } catch (Exception ignored) {}
++        // 2) Fallback: first private IPv4 on a non-virtual interface.
+         try {
+             java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+             while (interfaces.hasMoreElements()) {
+                 java.net.NetworkInterface iface = interfaces.nextElement();
+-                if (iface.isLoopback() || !iface.isUp()) continue;
++                if (iface.isLoopback() || !iface.isUp() || iface.isVirtual()) continue;
++                String n = (iface.getDisplayName() + " " + iface.getName()).toLowerCase();
++                if (n.contains("virtual") || n.contains("vmware") || n.contains("vbox") || n.contains("hyper-v") || n.contains("wsl") || n.contains("docker")) continue;
+                 java.util.Enumeration<java.net.InetAddress> addresses = iface.getInetAddresses();
+                 while (addresses.hasMoreElements()) {
+                     java.net.InetAddress addr = addresses.nextElement();
+-                    if (addr instanceof java.net.Inet4Address && !addr.isLoopbackAddress()) {
+-                        String ip = addr.getHostAddress();
+-                        if (ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) {
+-                            return ip;
+-                        }
++                    if (addr instanceof java.net.Inet4Address && addr.isSiteLocalAddress()) {
++                        return addr.getHostAddress();
+                     }
+                 }
+             }
+diff --git a/MiniProject/src/campusmesh/web/CampusMeshWebRunner.java b/MiniProject/src/campusmesh/web/CampusMeshWebRunner.java
+index 93ffb2f..0f1a75c 100644
+--- a/MiniProject/src/campusmesh/web/CampusMeshWebRunner.java
++++ b/MiniProject/src/campusmesh/web/CampusMeshWebRunner.java
+@@ -13,6 +13,7 @@ import campusmesh.routing.AdaptiveRouter;
+ import campusmesh.routing.RoutingEngine;
+ 
+ import java.awt.Desktop;
++import campusmesh.networking.TCPManager;
+ import java.io.File;
+ import java.net.URI;
+ 
+@@ -32,6 +33,7 @@ public class CampusMeshWebRunner {
+         System.out.println("================================================================================\n");
+ 
+         boolean isPublic = true;
++        boolean mockPeers = true;
+         int webPort = DEFAULT_WEB_PORT;
+         String peerId = "LAPTOP_WIN";
+ 
+@@ -40,6 +42,8 @@ public class CampusMeshWebRunner {
+                 isPublic = true;
+             } else if ("--private".equalsIgnoreCase(arg) || "--local".equalsIgnoreCase(arg)) {
+                 isPublic = false;
++            } else if ("--no-mock".equalsIgnoreCase(arg)) {
++                mockPeers = false;
+             } else if (arg.startsWith("--port=")) {
+                 try { webPort = Integer.parseInt(arg.substring(7)); } catch (Exception ignored) {}
+             } else if (arg.startsWith("--peer=")) {
+@@ -52,7 +56,8 @@ public class CampusMeshWebRunner {
+         }
+ 
+         String bindHost = isPublic ? "0.0.0.0" : "127.0.0.1";
+-        Peer localPeer = new Peer(peerId, "127.0.0.1", DEFAULT_TCP_PORT);
++        String lanIpForPeer = CampusMeshHttpServer.getLocalLanIp();
++        Peer localPeer = new Peer(peerId, lanIpForPeer, DEFAULT_TCP_PORT);
+ 
+         MessageBuffer buffer = new MessageBuffer(peerId);
+         ContactManager contactManager = new ContactManager(localPeer);
+@@ -73,19 +78,22 @@ public class CampusMeshWebRunner {
+         buffer.addMessage(m2);
+         buffer.addMessage(m3);
+ 
++        if (mockPeers) {
+         // Pre-populate mock peers for immediate visualization
+-        DiscoveredPeer andPeer = new DiscoveredPeer("PHONE_AND", "Galaxy S23", "ANDROID", "192.168.1.155", 5005);
+-        andPeer.addTransport(DiscoveredPeer.TRANSPORT_WIFI);
+-        andPeer.addTransport(DiscoveredPeer.TRANSPORT_BLE);
+-        discoveryManager.getRegistry().registerOrUpdate(andPeer);
++            DiscoveredPeer andPeer = new DiscoveredPeer("PHONE_AND", "Galaxy S23", "ANDROID", "192.168.1.155", 5005);
++            andPeer.addTransport(DiscoveredPeer.TRANSPORT_WIFI);
++            andPeer.addTransport(DiscoveredPeer.TRANSPORT_BLE);
++            discoveryManager.getRegistry().registerOrUpdate(andPeer);
+ 
+-        DiscoveredPeer iosPeer = new DiscoveredPeer("IPHONE_IOS", "iPhone 15 Pro", "IOS", "192.168.1.140", 5000);
+-        iosPeer.addTransport(DiscoveredPeer.TRANSPORT_BLE);
+-        discoveryManager.getRegistry().registerOrUpdate(iosPeer);
++            DiscoveredPeer iosPeer = new DiscoveredPeer("IPHONE_IOS", "iPhone 15 Pro", "IOS", "192.168.1.140", 5000);
++            iosPeer.addTransport(DiscoveredPeer.TRANSPORT_BLE);
++            discoveryManager.getRegistry().registerOrUpdate(iosPeer);
+ 
+-        DiscoveredPeer ubuPeer = new DiscoveredPeer("LAPTOP_UBU", "Lab Workstation", "UBUNTU", "192.168.1.190", 5002);
+-        ubuPeer.addTransport(DiscoveredPeer.TRANSPORT_WIFI);
+-        discoveryManager.getRegistry().registerOrUpdate(ubuPeer);
++            DiscoveredPeer ubuPeer = new DiscoveredPeer("LAPTOP_UBU", "Lab Workstation", "UBUNTU", "192.168.1.190", 5002);
++            ubuPeer.addTransport(DiscoveredPeer.TRANSPORT_WIFI);
++            discoveryManager.getRegistry().registerOrUpdate(ubuPeer);
++
++        }
+ 
+         // Start active Wi-Fi and BLE discovery
+         try {
+@@ -95,6 +103,20 @@ public class CampusMeshWebRunner {
+             System.out.println("[DISCOVERY NOTE] " + e.getMessage());
+         }
+ 
++        // Receive messages from real peers (Android/iOS/other laptops) on the advertised TCP port
++        TCPManager tcpServer = new TCPManager();
++        try {
++            tcpServer.startServer(DEFAULT_TCP_PORT, (msg, socket) -> {
++                MessageBuffer.AddResult r = buffer.addMessageWithStatus(msg);
++                logger.logMessageCreated(msg.getSourceId(), msg.getMessageId(), msg.getDestinationId(), msg.toJson());
++                System.out.println("[TCP RX] " + msg.getMessageId() + " from " + msg.getSourceId() + " -> " + r);
++            });
++            System.out.println("[TCP] Listening for peer messages on port " + DEFAULT_TCP_PORT);
++        } catch (Exception e) {
++            System.err.println("[TCP WARNING] Could not listen on port " + DEFAULT_TCP_PORT + ": " + e.getMessage()
++                    + " (port in use or blocked by firewall). Peers will not be able to send to this node.");
++        }
++
+         File webRoot = new File("web");
+         CampusMeshHttpServer server = new CampusMeshHttpServer(
+                 bindHost, webPort, webRoot, localPeer, buffer, contactManager, discoveryManager, routingEngine, logger, sender);
+@@ -117,7 +139,7 @@ public class CampusMeshWebRunner {
+             System.out.println("  HOW TO CONNECT YOUR MOBILE PHONE OR TABLET:");
+             System.out.println("  1. Connect your phone to the same Wi-Fi (or turn on Laptop Mobile Hotspot).");
+             System.out.printf("  2. Open Chrome or Safari on your phone and go to:%n");
+-            System.out.printf("     👉  %s%n", mobileUrl);
++            System.out.printf("     >>  %s/#token=%s%n", mobileUrl, server.getApiToken());
+             System.out.println("  3. Your phone instantly appears on the live Radar as an online node!");
+             System.out.println("--------------------------------------------------------------------------------");
+             System.out.println("Press Ctrl+C to stop the dashboard server.\n");
+@@ -132,6 +154,7 @@ public class CampusMeshWebRunner {
+                 discoveryManager.close();
+                 logger.close();
+                 sender.close();
++                tcpServer.close();
+             }));
+ 
+             Thread.currentThread().join();
+diff --git a/MiniProject/web/app.js b/MiniProject/web/app.js
+index 9b4156f..a9c837c 100644
+--- a/MiniProject/web/app.js
++++ b/MiniProject/web/app.js
+@@ -497,6 +497,10 @@ async function fetchData() {
+         if (resStatus) {
+             if (resStatus.apiToken) {
+                 state.apiToken = resStatus.apiToken;
++            } else if (!state.apiToken) {
++                // Remote device (phone): token comes from the link printed in the console, e.g. http://IP:8080/#token=...
++                const t = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("token");
++                if (t) state.apiToken = t;
+             }
+             state.serverLocalPeerId = resStatus.localPeerId || "LAPTOP_WIN";
+             state.localPeer.id = resStatus.localPeerId || "LAPTOP_WIN";

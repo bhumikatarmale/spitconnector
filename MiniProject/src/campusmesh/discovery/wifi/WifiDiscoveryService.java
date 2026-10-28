@@ -159,10 +159,23 @@ public class WifiDiscoveryService implements DiscoveryService {
             this.beaconSocket.setReuseAddress(true);
 
             // Join multicast group across active network interfaces
+            // Join on every usable interface (Windows often has VPN/WSL/VirtualBox adapters that
+            // would otherwise win the default-interface choice and hide the real Wi-Fi/hotspot NIC).
+            boolean joined = false;
             try {
-                beaconSocket.joinGroup(beaconGroup);
-            } catch (Exception e) {
-                // In some OS/network configurations, joinGroup on specific interface is needed
+                Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
+                while (nics.hasMoreElements()) {
+                    NetworkInterface nic = nics.nextElement();
+                    try {
+                        if (nic.isUp() && nic.supportsMulticast() && !nic.isLoopback() && nic.getInetAddresses().hasMoreElements()) {
+                            beaconSocket.joinGroup(new java.net.InetSocketAddress(beaconGroup, MULTICAST_PORT), nic);
+                            joined = true;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            } catch (Exception ignored) {}
+            if (!joined) {
+                try { beaconSocket.joinGroup(beaconGroup); } catch (Exception ignored) {}
             }
 
             // Start background receiver thread
@@ -199,7 +212,19 @@ public class WifiDiscoveryService implements DiscoveryService {
             );
             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
             DatagramPacket packet = new DatagramPacket(bytes, bytes.length, beaconGroup, MULTICAST_PORT);
-            beaconSocket.send(packet);
+            boolean sent = false;
+            Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
+            while (nics.hasMoreElements()) {
+                NetworkInterface nic = nics.nextElement();
+                try {
+                    if (nic.isUp() && nic.supportsMulticast() && !nic.isLoopback() && nic.getInetAddresses().hasMoreElements()) {
+                        beaconSocket.setNetworkInterface(nic);
+                        beaconSocket.send(packet);
+                        sent = true;
+                    }
+                } catch (IOException ignored) {}
+            }
+            if (!sent) beaconSocket.send(packet);
         } catch (IOException ignored) {}
     }
 
@@ -260,6 +285,11 @@ public class WifiDiscoveryService implements DiscoveryService {
     }
 
     private static InetAddress getPreferredLocalAddress() {
+        try (java.net.DatagramSocket ds = new java.net.DatagramSocket()) {
+            ds.connect(InetAddress.getByName("192.0.2.1"), 9);
+            InetAddress a = ds.getLocalAddress();
+            if (a != null && !a.isAnyLocalAddress() && !a.isLoopbackAddress()) return a;
+        } catch (Exception ignored) {}
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {

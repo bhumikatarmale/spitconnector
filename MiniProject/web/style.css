@@ -1399,3 +1399,51 @@ body.light-theme .ble-chunks-view {
     justify-content: center;
     flex-shrink: 0;
 }
+
+/* Real Node Identity & Buffer Tabs */
+.buffer-filter-tabs {
+    display: inline-flex;
+    gap: 4px;
+    background: var(--bg-input);
+    padding: 3px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.buffer-tab {
+    background: transparent;
+    border: none;
+    padding: 3px 9px;
+    font-size: 0.70rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.buffer-tab:hover {
+    color: var(--text-primary);
+}
+
+.buffer-tab.active {
+    background: var(--accent-blue);
+    color: #ffffff;
+}
+
+.btn-ghost-sm {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.70rem;
+    padding: 1px 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-ghost-sm:hover {
+    color: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+}
+

@@ -31,15 +31,12 @@
         </a>
 
         <div class="nav-metrics">
-            <div class="metric-card" title="Select which node identity this client operates as">
-                <span class="metric-label">Operating Node</span>
-                <select id="activeNodeSelect" class="form-select font-bold" style="padding: 2px 24px 2px 4px; font-size: 0.8rem; background-color: transparent; border: none; color: var(--accent-cyan); cursor: pointer;">
-                    <option value="LAPTOP_WIN">💻 LAPTOP_WIN (This Laptop)</option>
-                    <option value="PHONE_MOBILE">📱 PHONE_MOBILE (This Mobile Phone)</option>
-                    <option value="PHONE_AND">📱 PHONE_AND (Galaxy S23)</option>
-                    <option value="IPHONE_IOS">📱 IPHONE_IOS (iPhone 15)</option>
-                    <option value="LAPTOP_UBU">💻 LAPTOP_UBU (Ubuntu Lab)</option>
-                </select>
+            <div class="metric-card" title="Your device's local node identity in the mesh">
+                <span class="metric-label">This Device Node</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="metric-value font-mono font-bold" id="myNodeIdBadge" style="color: var(--accent-cyan); font-size: 0.82rem;">...</span>
+                    <button type="button" class="btn-ghost-sm" onclick="promptChangeNodeId()" title="Change your Call-sign / Device ID">✎ Edit</button>
+                </div>
             </div>
             <div class="metric-card">
                 <span class="metric-label">Active Strategy</span>
@@ -114,13 +111,9 @@
                         </div>
                     </div>
                     <div class="card-actions">
-                        <button id="btnRunSim" class="btn btn-primary btn-sm" title="Run store-carry-forward simulation across online nodes">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></polygon></svg>
-                            Run Multi-Hop Demo
-                        </button>
-                        <button id="btnScanBle" class="btn btn-secondary btn-sm" title="Broadcast beacon and scan for Bluetooth LE peers">
+                        <button id="btnScanBle" class="btn btn-primary btn-sm" title="Broadcast beacon and scan for real Wi-Fi and Bluetooth LE peers">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                            Scan Radios
+                            <span>Scan Radios & Sync</span>
                         </button>
                     </div>
                 </div>
@@ -253,6 +246,11 @@
                             </p>
                         </div>
                     </div>
+                    <div class="buffer-filter-tabs">
+                        <button type="button" class="buffer-tab active" id="tabBufAll" onclick="setBufferFilter('all')">All Messages (<span id="bufCountAll">0</span>)</button>
+                        <button type="button" class="buffer-tab" id="tabBufInbox" onclick="setBufferFilter('inbox')">📥 Inbox (<span id="bufCountInbox">0</span>)</button>
+                        <button type="button" class="buffer-tab" id="tabBufSent" onclick="setBufferFilter('sent')">📤 Outbox (<span id="bufCountSent">0</span>)</button>
+                    </div>
                     <div class="card-actions">
                         <button id="btnPurgeExpired" class="btn btn-secondary btn-sm" title="Remove expired TTL messages from local store">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
@@ -294,13 +292,10 @@
                     <div class="form-row">
                         <div class="form-group flex-1">
                             <label for="composeSource">
-                                <span>Sender (Source Node)</span>
+                                <span>Sender (This Node - Locked)</span>
                             </label>
-                            <input type="text" id="composeSource" class="form-input font-bold font-mono" value="LAPTOP_WIN" required>
+                            <input type="text" id="composeSource" class="form-input font-bold font-mono" readonly value="" style="background: var(--bg-card); opacity: 0.85; cursor: not-allowed;" title="Sender identity is bound to this device" required>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-icon" style="margin-bottom: 2px;" onclick="swapNodes()" title="Swap Sender and Destination">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
-                        </button>
                         <div class="form-group flex-1">
                             <label for="composeDest">
                                 <span>Destination Peer ID</span>
@@ -441,7 +436,7 @@
                 <div class="connect-url-box">
                     <label style="font-weight: 600; margin-bottom: 8px; display: block; font-size: 0.76rem;">Open in Mobile Phone Browser (Chrome / Safari):</label>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="mobileUrlInput" class="form-input font-mono font-bold" readonly value="http://10.36.101.62:8080" style="color: var(--accent-cyan); font-size: 0.9rem;">
+                        <input type="text" id="mobileUrlInput" class="form-input font-mono font-bold" readonly value="Detecting LAN IP..." style="color: var(--accent-cyan); font-size: 0.9rem;">
                         <button type="button" class="btn btn-primary btn-sm" onclick="copyMobileUrl()">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                             Copy URL

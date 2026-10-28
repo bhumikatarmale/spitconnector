@@ -184,6 +184,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -200,21 +201,52 @@ public class CampusMeshHttpServer implements AutoCloseable {
             }
 
             String clientIp = exchange.getRemoteAddress().getAddress().getHostAddress();
-            boolean isRemote = !clientIp.equals("127.0.0.1") && !clientIp.equals("0:0:0:0:0:0:0:1") && !clientIp.equals("localhost");
-            String suggestedNodeId = isRemote ? "PHONE_MOBILE" : localPeer.getPeerId();
+            String hostHeader = exchange.getRequestHeaders().getFirst("Host");
+            // In Docker, host connections forward through 172.x.x.1 gateway.
+            // Check Host header: if accessing via localhost / 127.0.0.1, it is the host laptop!
+            boolean isLocalhost = (hostHeader != null && (hostHeader.startsWith("localhost") || hostHeader.startsWith("127.0.0.1")))
+                    || clientIp.equals("127.0.0.1") || clientIp.equals("0:0:0:0:0:0:0:1") || clientIp.equals("localhost");
+            boolean isRemote = !isLocalhost;
 
-            if (isRemote && discoveryManager != null && discoveryManager.getRegistry().getPeer("PHONE_MOBILE") == null) {
-                DiscoveredPeer mobilePeer = new DiscoveredPeer("PHONE_MOBILE", "My Mobile Phone", "MOBILE", clientIp, 8080);
-                mobilePeer.addTransport(DiscoveredPeer.TRANSPORT_WIFI);
-                discoveryManager.getRegistry().registerOrUpdate(mobilePeer);
-                contactManager.startContact(mobilePeer.toPeer());
+            // Dynamic Call-Sign / Node ID: support custom device name via X-Node-ID header
+            String customNodeId = exchange.getRequestHeaders().getFirst("X-Node-ID");
+            String assignedNodeId;
+            if (customNodeId != null && !customNodeId.trim().isEmpty()) {
+                assignedNodeId = customNodeId.trim().toUpperCase().replaceAll("[^A-Z0-9_.-]", "_");
+                if (assignedNodeId.length() > 32) assignedNodeId = assignedNodeId.substring(0, 32);
+            } else {
+                assignedNodeId = isRemote ? "PHONE_MOBILE" : localPeer.getPeerId();
+            }
+
+            if (isRemote && discoveryManager != null) {
+                DiscoveredPeer existing = discoveryManager.getRegistry().getPeer(assignedNodeId);
+                if (existing == null) {
+                    String platform = "MOBILE";
+                    String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
+                    if (userAgent != null) {
+                        if (userAgent.contains("Android")) platform = "ANDROID";
+                        else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) platform = "IOS";
+                        else if (userAgent.contains("Linux")) platform = "UBUNTU";
+                        else if (userAgent.contains("Windows")) platform = "WINDOWS";
+                    }
+                    DiscoveredPeer remotePeer = new DiscoveredPeer(assignedNodeId, assignedNodeId, platform, clientIp, 8080);
+                    remotePeer.addTransport(DiscoveredPeer.TRANSPORT_WIFI);
+                    discoveryManager.getRegistry().registerOrUpdate(remotePeer);
+                    contactManager.startContact(remotePeer.toPeer());
+                } else {
+                    existing.touch();
+                    if (!contactManager.isInContact(assignedNodeId)) {
+                        contactManager.startContact(existing.toPeer());
+                    }
+                }
             }
 
             JsonObject root = new JsonObject();
             root.addProperty("localPeerId", localPeer.getPeerId());
             root.addProperty("clientIp", clientIp);
             root.addProperty("isRemoteClient", isRemote);
-            root.addProperty("suggestedNodeId", suggestedNodeId);
+            root.addProperty("suggestedNodeId", assignedNodeId);
+            root.addProperty("myNodeId", assignedNodeId);
             root.addProperty("ipAddress", localPeer.getIpAddress());
             root.addProperty("port", localPeer.getPort());
             root.addProperty("serverPort", getPort());
@@ -232,7 +264,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             root.addProperty("bufferMaxBytes", buffer.getCapacityBytes());
             root.addProperty("bufferPressure", Double.parseDouble(String.format(java.util.Locale.US, "%.4f", buffer.getBufferPressure())));
             root.addProperty("uptimeSeconds", (System.currentTimeMillis() - startTime) / 1000);
-            root.addProperty("apiToken", apiToken);
+            if (!isRemote) root.addProperty("apiToken", apiToken); // remote devices must use the #token= link printed in the console
 
             JsonArray contactsArr = new JsonArray();
             for (Peer p : contactManager.getActiveContacts()) {
@@ -256,6 +288,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -300,6 +333,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -338,6 +372,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -479,6 +514,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -539,6 +575,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -602,6 +639,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -645,6 +683,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -681,6 +720,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -705,6 +745,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
                     logger.logMessageForwarded("PHONE_AND", "IPHONE_IOS", "CAMPUS_ALERT_01", "BLE_GATT", "{\"chunks\":45,\"crc\":\"0xDD28BE60\"}");
                     logger.logMessageForwarded("IPHONE_IOS", "LAPTOP_UBU", "CAMPUS_ALERT_01", "WIFI_TCP", "{\"bytes\":312}");
                     logger.logMessageDelivered("LAPTOP_UBU", "CAMPUS_ALERT_01", "LAPTOP_WIN");
+                    Thread.sleep(500);
                 } catch (Exception e) {
                     System.err.println("[SIMULATION ERROR] " + e.getMessage());
                 } finally {
@@ -729,6 +770,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             addCorsHeaders(exchange);
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
+                exchange.close();
                 return;
             }
 
@@ -741,7 +783,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             File canonicalRoot = webRoot.getCanonicalFile();
             File target = new File(canonicalRoot, path.replace("/", File.separator)).getCanonicalFile();
 
-            if (!target.getPath().startsWith(canonicalRoot.getPath())) {
+            if (!target.getPath().equals(canonicalRoot.getPath()) && !target.getPath().startsWith(canonicalRoot.getPath() + File.separator)) {
                 sendError(exchange, 403, "FORBIDDEN", "Path traversal forbidden: " + path);
                 return;
             }
@@ -758,6 +800,8 @@ public class CampusMeshHttpServer implements AutoCloseable {
             String mimeType = getMimeType(target.getName());
             byte[] bytes = readFileToBytes(target);
             exchange.getResponseHeaders().set("Content-Type", mimeType);
+            // Short cache for static assets so mobile browsers pick up updates quickly
+            exchange.getResponseHeaders().set("Cache-Control", "public, max-age=30");
             exchange.sendResponseHeaders(200, bytes.length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(bytes);
@@ -770,19 +814,33 @@ public class CampusMeshHttpServer implements AutoCloseable {
     // ------------------------------------------------------------------------
 
     public static String getLocalLanIp() {
+        // In Docker, the container only sees its bridge network (172.x.x.x).
+        // HOST_LAN_IP env var allows the host's real LAN IP to be passed through.
+        String envIp = System.getenv("HOST_LAN_IP");
+        if (envIp != null && !envIp.trim().isEmpty()) {
+            return envIp.trim();
+        }
+        // 1) Ask the OS which address it would use to reach the LAN (skips VirtualBox/WSL/Hyper-V adapters).
+        try (java.net.DatagramSocket ds = new java.net.DatagramSocket()) {
+            ds.connect(java.net.InetAddress.getByName("192.0.2.1"), 9); // no packet is sent
+            java.net.InetAddress a = ds.getLocalAddress();
+            if (a != null && !a.isAnyLocalAddress() && !a.isLoopbackAddress()) {
+                return a.getHostAddress();
+            }
+        } catch (Exception ignored) {}
+        // 2) Fallback: first private IPv4 on a non-virtual interface.
         try {
             java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
                 java.net.NetworkInterface iface = interfaces.nextElement();
-                if (iface.isLoopback() || !iface.isUp()) continue;
+                if (iface.isLoopback() || !iface.isUp() || iface.isVirtual()) continue;
+                String n = (iface.getDisplayName() + " " + iface.getName()).toLowerCase();
+                if (n.contains("virtual") || n.contains("vmware") || n.contains("vbox") || n.contains("hyper-v") || n.contains("wsl") || n.contains("docker")) continue;
                 java.util.Enumeration<java.net.InetAddress> addresses = iface.getInetAddresses();
                 while (addresses.hasMoreElements()) {
                     java.net.InetAddress addr = addresses.nextElement();
-                    if (addr instanceof java.net.Inet4Address && !addr.isLoopbackAddress()) {
-                        String ip = addr.getHostAddress();
-                        if (ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) {
-                            return ip;
-                        }
+                    if (addr instanceof java.net.Inet4Address && addr.isSiteLocalAddress()) {
+                        return addr.getHostAddress();
                     }
                 }
             }
@@ -793,23 +851,24 @@ public class CampusMeshHttpServer implements AutoCloseable {
     }
 
     private void addCorsHeaders(HttpExchange exchange) {
+        // This is a LAN-only campus mesh dashboard — allow all origins so mobile
+        // devices on the same Wi-Fi / hotspot can access API endpoints without CORS blocks.
         String origin = exchange.getRequestHeaders().getFirst("Origin");
-        String host = exchange.getRequestHeaders().getFirst("Host");
-        if (origin != null && host != null) {
-            String httpHost = "http://" + host;
-            String httpsHost = "https://" + host;
-            if (origin.equalsIgnoreCase(httpHost) || origin.equalsIgnoreCase(httpsHost)) {
-                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", origin);
-                exchange.getResponseHeaders().set("Vary", "Origin");
-            }
+        if (origin != null && !origin.isEmpty()) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", origin);
+            exchange.getResponseHeaders().set("Vary", "Origin");
+        } else {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         }
         exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CampusMesh-Token");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CampusMesh-Token, X-Node-ID");
+        exchange.getResponseHeaders().set("Access-Control-Max-Age", "86400");
     }
 
     private static void sendJson(HttpExchange exchange, int statusCode, String json) throws IOException {
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        exchange.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate");
         exchange.sendResponseHeaders(statusCode, bytes.length);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);

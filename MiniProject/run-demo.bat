@@ -11,6 +11,27 @@ if not exist bin\campusmesh\demo\BackendDemo.class (
     call build.bat
 )
 
+where java >nul 2>nul
+if errorlevel 1 (
+    if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" set "PATH=%JAVA_HOME%\bin;%PATH%"
+)
+where java >nul 2>nul
+if errorlevel 1 (
+    for /d %%D in ("%USERPROFILE%\.jdks\*") do (
+        if exist "%%D\bin\java.exe" (
+            set "PATH=%%D\bin;%PATH%"
+            goto :java_found
+        )
+    )
+    for /d %%D in ("%ProgramFiles%\Java\*") do (
+        if exist "%%D\bin\java.exe" (
+            set "PATH=%%D\bin;%PATH%"
+            goto :java_found
+        )
+    )
+)
+:java_found
+
 echo [1/2] Running Store-Carry-Forward DTN Backend Demo (BackendDemo)...
 echo.
 java -cp "bin;lib/*" campusmesh.demo.BackendDemo
