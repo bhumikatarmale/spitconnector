@@ -107,12 +107,16 @@ function detectInitialNode(resStatus) {
     let chosen;
     if (isLocalhost || !isMobileUA) {
         // Desktop / Host machine
-        chosen = (resStatus && resStatus.localPeerId) ? resStatus.localPeerId : "LAPTOP_DOCKER";
+        chosen = (resStatus && resStatus.localPeerId) ? resStatus.localPeerId : "LAPTOP_WIN";
         localStorage.setItem("campusmesh_my_node_id", chosen);
     } else {
-        // Mobile device accessing over Wi-Fi
-        chosen = (resStatus && resStatus.myNodeId && resStatus.myNodeId !== "LAPTOP_DOCKER") 
-                 ? resStatus.myNodeId : "PHONE_MOBILE";
+        // Mobile device accessing over Wi-Fi: generate distinct unique node call-sign
+        const rand = Math.floor(100 + Math.random() * 900);
+        let prefix = "PHONE";
+        if (/iPhone|iPad/i.test(navigator.userAgent)) prefix = "IPHONE";
+        else if (/Android/i.test(navigator.userAgent)) prefix = "PHONE_AND";
+        chosen = `${prefix}_${rand}`;
+        localStorage.setItem("campusmesh_my_node_id", chosen);
     }
     applyMyNodeId(chosen);
 }
