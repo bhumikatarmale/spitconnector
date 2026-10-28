@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -64,6 +66,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
     private final long startTime;
     private final String apiToken;
     private final AtomicBoolean simulationRunning = new AtomicBoolean(false);
+    private final ScheduledExecutorService bufferReaper;
 
     private HttpServer server;
     private volatile boolean running = false;
@@ -105,6 +108,11 @@ public class CampusMeshHttpServer implements AutoCloseable {
         this.sender = (sender != null) ? sender : new MultiTransportSender();
         this.startTime = System.currentTimeMillis();
         this.apiToken = UUID.randomUUID().toString();
+        this.bufferReaper = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "CampusMesh-BufferReaper");
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     public synchronized void start() throws IOException {
@@ -117,10 +125,19 @@ public class CampusMeshHttpServer implements AutoCloseable {
             return t;
         }));
 
+        // Periodically purge expired messages from DTN buffer every 1 second
+        this.bufferReaper.scheduleAtFixedRate(
+                this::purgeExpiredMessages,
+                1000,
+                1000,
+                TimeUnit.MILLISECONDS
+        );
+
         // API Endpoints
         server.createContext("/api/status", new StatusHandler());
         server.createContext("/api/peers", new PeersHandler());
         server.createContext("/api/buffer", new BufferHandler());
+        server.createContext("/api/buffer/purge", new BufferHandler());
         server.createContext("/api/messages", new MessagesHandler());
         server.createContext("/api/strategy", new StrategyHandler());
         server.createContext("/api/contacts", new ContactsHandler());
@@ -138,6 +155,9 @@ public class CampusMeshHttpServer implements AutoCloseable {
     public synchronized void stop() {
         if (!running) return;
         running = false;
+        if (bufferReaper != null) {
+            bufferReaper.shutdownNow();
+        }
         if (server != null) {
             server.stop(1);
             server = null;
@@ -169,6 +189,23 @@ public class CampusMeshHttpServer implements AutoCloseable {
     private boolean isAuthorized(HttpExchange exchange) {
         String token = exchange.getRequestHeaders().getFirst("X-CampusMesh-Token");
         return apiToken != null && apiToken.equals(token);
+    }
+
+    /**
+     * Purges expired messages from the local DTN buffer and logs drop events in SQLite.
+     *
+     * @return List of expired messages removed
+     */
+    public synchronized List<Message> purgeExpiredMessages() {
+        if (buffer == null) return Collections.emptyList();
+        List<Message> expired = buffer.removeExpiredMessages();
+        for (Message m : expired) {
+            if (logger != null) {
+                logger.logEvent(EventLogger.EventType.MESSAGE_EXPIRED, localPeer.getPeerId(), m.getMessageId(), m.getDestinationId(), "EXPIRED_TTL", "{\"ttlSeconds\":" + m.getOriginalTTL() + "}");
+            }
+            System.out.println("[DTN BUFFER] Dropped expired message: " + m.getMessageId() + " (TTL elapsed)");
+        }
+        return expired;
     }
 
     // ------------------------------------------------------------------------
@@ -326,6 +363,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
 
     /**
      * GET /api/buffer - List of queued messages in local store with live remaining TTL.
+     * DELETE /api/buffer or POST /api/buffer/purge - Purge all expired messages.
      */
     private class BufferHandler implements HttpHandler {
         @Override
@@ -336,6 +374,19 @@ public class CampusMeshHttpServer implements AutoCloseable {
                 exchange.close();
                 return;
             }
+
+            // Always purge expired messages prior to inspection or mutation
+            List<Message> purged = purgeExpiredMessages();
+
+            if ("DELETE".equalsIgnoreCase(exchange.getRequestMethod()) || ("POST".equalsIgnoreCase(exchange.getRequestMethod()) && exchange.getRequestURI().getPath().endsWith("/purge"))) {
+                JsonObject resp = new JsonObject();
+                resp.addProperty("success", true);
+                resp.addProperty("purgedCount", purged.size());
+                resp.addProperty("remainingBufferCount", buffer.size());
+                sendJson(exchange, 200, GSON.toJson(resp));
+                return;
+            }
+
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
                 sendError(exchange, 405, "METHOD_NOT_ALLOWED", "Method Not Allowed");
                 return;
@@ -344,6 +395,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
             JsonArray bufArray = new JsonArray();
             List<Message> msgs = buffer.getAllMessages();
             for (Message m : msgs) {
+                if (m.isExpired()) continue;
                 JsonObject mObj = new JsonObject();
                 mObj.addProperty("messageId", m.getMessageId());
                 mObj.addProperty("sourceId", m.getSourceId());
@@ -355,7 +407,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
                 mObj.addProperty("createdAt", m.getCreatedAt().toString());
                 mObj.addProperty("expiresAt", m.getExpiresAt().toString());
                 mObj.addProperty("remainingTTL", m.getRemainingTTL());
-                mObj.addProperty("isExpired", m.isExpired());
+                mObj.addProperty("isExpired", false);
                 mObj.addProperty("version", m.getVersion());
                 bufArray.add(mObj);
             }
@@ -860,7 +912,7 @@ public class CampusMeshHttpServer implements AutoCloseable {
         } else {
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         }
-        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CampusMesh-Token, X-Node-ID");
         exchange.getResponseHeaders().set("Access-Control-Max-Age", "86400");
     }

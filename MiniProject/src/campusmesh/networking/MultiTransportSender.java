@@ -63,6 +63,9 @@ public class MultiTransportSender implements AutoCloseable {
         if (targetPeer == null || message == null) {
             return new TransferResult(false, "NONE", 0, 0, "Invalid target peer or message");
         }
+        if (message.isExpired()) {
+            return new TransferResult(false, "NONE", 0, 0, "Message has expired (TTL elapsed)");
+        }
 
         byte[] rawBytes = message.toJson().getBytes(java.nio.charset.StandardCharsets.UTF_8);
 

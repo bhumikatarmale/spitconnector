@@ -17,6 +17,12 @@ if errorlevel 1 (
 )
 where java >nul 2>nul
 if errorlevel 1 (
+    for /d %%D in ("%ProgramFiles%\Microsoft\jdk*") do (
+        if exist "%%D\bin\java.exe" (
+            set "PATH=%%D\bin;%PATH%"
+            goto :java_found
+        )
+    )
     for /d %%D in ("%USERPROFILE%\.jdks\*") do (
         if exist "%%D\bin\java.exe" (
             set "PATH=%%D\bin;%PATH%"

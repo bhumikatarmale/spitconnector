@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0MiniProject"
-call run-web.bat
+call run-web.bat %*

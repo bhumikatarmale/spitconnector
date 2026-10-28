@@ -329,12 +329,14 @@ function initEventListeners() {
     // Purge Expired Button
     const btnPurge = document.getElementById("btnPurgeExpired");
     if (btnPurge) {
-        btnPurge.addEventListener("click", () => {
-            const beforeCount = state.buffer.length;
-            state.buffer = state.buffer.filter(m => !m.isExpired);
-            const purgedCount = beforeCount - state.buffer.length;
-            renderBuffer();
-            showToast(purgedCount > 0 ? `Purged ${purgedCount} expired message(s).` : "No expired messages to purge.", "info");
+        btnPurge.addEventListener("click", async () => {
+            try {
+                const headers = {};
+                if (state.apiToken) headers["X-CampusMesh-Token"] = state.apiToken;
+                await fetch(`${API_BASE}/api/buffer/purge`, { method: "POST", headers });
+            } catch (ignored) {}
+            await fetchData();
+            showToast("Purged expired TTL messages from mesh store.", "info");
         });
     }
 
@@ -689,13 +691,17 @@ function renderBuffer() {
     const allMsgs = state.buffer || [];
     const myId = state.myNodeId || state.activeNodeId || "";
 
-    const inboxMsgs = allMsgs.filter(m => m.destinationId === "BROADCAST" || m.destinationId === myId);
+    // Active unexpired messages
+    const activeMsgs = allMsgs.filter(m => !m.isExpired && (m.remainingTTL === undefined || m.remainingTTL > 0));
+
+    // Inbox ONLY receives live unexpired messages addressed to this device or broadcast
+    const inboxMsgs = activeMsgs.filter(m => m.destinationId === "BROADCAST" || m.destinationId === myId);
     const sentMsgs = allMsgs.filter(m => m.sourceId === myId);
 
     const cAll = document.getElementById("bufCountAll");
     const cInbox = document.getElementById("bufCountInbox");
     const cSent = document.getElementById("bufCountSent");
-    if (cAll) cAll.textContent = allMsgs.length;
+    if (cAll) cAll.textContent = activeMsgs.length;
     if (cInbox) cInbox.textContent = inboxMsgs.length;
     if (cSent) cSent.textContent = sentMsgs.length;
 

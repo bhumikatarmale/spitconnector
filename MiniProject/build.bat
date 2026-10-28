@@ -10,13 +10,25 @@ if errorlevel 1 (
 )
 where javac >nul 2>nul
 if errorlevel 1 (
-    for /d %%D in ("%USERPROFILE%\.jdks\*") do (
+    for /d %%D in ("%ProgramFiles%\Microsoft\jdk*") do (
+        if exist "%%D\bin\javac.exe" (
+            set "PATH=%%D\bin;%PATH%"
+            goto :jdk_found
+        )
+    )
+    for /d %%D in ("%ProgramFiles%\Eclipse Adoptium\jdk*") do (
         if exist "%%D\bin\javac.exe" (
             set "PATH=%%D\bin;%PATH%"
             goto :jdk_found
         )
     )
     for /d %%D in ("%ProgramFiles%\Java\*") do (
+        if exist "%%D\bin\javac.exe" (
+            set "PATH=%%D\bin;%PATH%"
+            goto :jdk_found
+        )
+    )
+    for /d %%D in ("%USERPROFILE%\.jdks\*") do (
         if exist "%%D\bin\javac.exe" (
             set "PATH=%%D\bin;%PATH%"
             goto :jdk_found

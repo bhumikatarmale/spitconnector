@@ -117,12 +117,30 @@ public class CampusMeshWebRunner {
         }
 
         File webRoot = new File("web");
-        CampusMeshHttpServer server = new CampusMeshHttpServer(
-                bindHost, webPort, webRoot, localPeer, buffer, contactManager, discoveryManager, routingEngine, logger, sender);
-
+        CampusMeshHttpServer server = null;
+        int activePort = webPort;
+        for (int p = webPort; p <= webPort + 10; p++) {
+            try {
+                server = new CampusMeshHttpServer(
+                        bindHost, p, webRoot, localPeer, buffer, contactManager, discoveryManager, routingEngine, logger, sender);
+                server.start();
+                activePort = p;
+                if (p != webPort) {
+                    System.out.printf("[NOTE] Port %d was already in use. Automatically switched to port %d.%n%n", webPort, activePort);
+                }
+                break;
+            } catch (java.io.IOException e) {
+                if (server != null) {
+                    try { server.stop(); } catch (Exception ignored) {}
+                }
+                if (p == webPort + 10) {
+                    System.err.printf("[SERVER ERROR] Ports %d through %d are all in use! Please close existing Java processes.%n", webPort, p);
+                    return;
+                }
+            }
+        }
+        webPort = activePort;
         try {
-            server.start();
-
             String lanIp = CampusMeshHttpServer.getLocalLanIp();
             String url = "http://localhost:" + webPort;
             String mobileUrl = "http://" + lanIp + ":" + webPort;
@@ -146,10 +164,11 @@ public class CampusMeshWebRunner {
             // Automatically open browser on desktop
             openBrowser(url);
 
+            CampusMeshHttpServer runningServer = server;
             // Keep main thread alive
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("\n[SHUTDOWN] Stopping CampusMesh Web Dashboard...");
-                server.stop();
+                if (runningServer != null) runningServer.stop();
                 discoveryManager.close();
                 logger.close();
                 sender.close();
