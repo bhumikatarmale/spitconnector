@@ -22,6 +22,32 @@
 
 ## 🚀 Quick Start
 
+### 🐳 Run with Docker (Recommended)
+You can run CampusMesh with Docker without needing Java installed on your host machine:
+
+```powershell
+# Start the Web Dashboard
+docker compose up -d campusmesh
+
+# Or use the helper script
+.\run-docker.bat
+```
+- Open [http://localhost:8080](http://localhost:8080) in your browser.
+- View container logs: `docker compose logs -f campusmesh`
+- Stop container: `docker compose down`
+
+```powershell
+# Run the Multi-Transport Demo walkthrough in Docker
+docker compose run --rm campusmesh-demo
+
+# Run all 52 Automated Tests in Docker
+docker compose run --rm campusmesh-test
+```
+
+---
+
+### Local (Java 17+) Setup
+
 ### 1. Run the Demonstration Suite
 Execute the end-to-end DTN and multi-transport demonstration walkthrough:
 ```powershell
@@ -30,12 +56,22 @@ Execute the end-to-end DTN and multi-transport demonstration walkthrough:
 *(Or in PowerShell: `.\run-demo.ps1`, or double-click `run-demo.bat` in File Explorer).*
 
 ### 2. Start the Web Dashboard
-Launch the embedded HTTP server:
+
+#### Option A: Running via Docker (Recommended)
+```powershell
+.\run-docker.ps1
+# Or double-click run-docker.bat
+```
+- **Automatic Setup**: Auto-detects your laptop's Wi-Fi LAN IP, passes it to the container, and starts CampusMesh in Docker.
+- **Local Dashboard**: [http://localhost:8080](http://localhost:8080)
+- **Mobile Access**: Displays your exact mobile URL (e.g. `http://192.168.1.10:8080`).
+
+#### Option B: Running Natively (Without Docker)
 ```powershell
 .\run-web.bat
 ```
 - **Local Access**: Open [http://localhost:8080](http://localhost:8080) in your browser.
-- **Mobile Device Access**: Connect your phone to your laptop's Wi-Fi hotspot and navigate to the IP displayed in the console (e.g. `http://10.36.101.62:8080`).
+- **Mobile Device Access**: Connect your phone to your laptop's Wi-Fi hotspot or local router, then navigate to `http://<your-laptop-lan-ip>:8080`.
 
 ### 3. Build & Compile Codebase
 ```powershell

@@ -1,0 +1,42 @@
+services:
+  campusmesh:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campusmesh-web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "5001:5001"
+      - "5354:5354/udp"
+    environment:
+      - PORT=8080
+      - PEER_ID=LAPTOP_DOCKER
+      # Pass host's real LAN IP so the dashboard shows the correct mobile URL
+      # instead of Docker's internal 172.x.x.x bridge IP.
+      # Override: HOST_LAN_IP=192.168.1.10 docker compose up -d
+      - HOST_LAN_IP=${HOST_LAN_IP:-}
+    volumes:
+      - campusmesh-data:/app/database
+
+  campusmesh-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campusmesh-demo
+    command: ["demo"]
+    profiles:
+      - tools
+
+  campusmesh-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campusmesh-test
+    command: ["test"]
+    profiles:
+      - tools
+
+volumes:
+  campusmesh-data:
+    driver: local

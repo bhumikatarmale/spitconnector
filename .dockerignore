@@ -1,0 +1,10 @@
+.git
+.agents
+.github
+*.pdf
+MiniProject/bin/
+MiniProject/android/
+MiniProject/ios/
+MiniProject/docs/
+MiniProject/database/*.db
+MiniProject/database/*.db-journal

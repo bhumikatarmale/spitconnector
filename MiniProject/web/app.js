@@ -77,41 +77,66 @@ function applyTheme(theme) {
 // --------------------------------------------------------------------------
 // Active Node Identity Management (Mobile vs Laptop)
 // --------------------------------------------------------------------------
+window.promptChangeNodeId = function() {
+    const current = state.myNodeId || "MY_NODE";
+    const entered = prompt("Enter your local mesh Call-sign / Device Node ID:\n(Letters, numbers, underscores only, max 20 chars)", current);
+    if (entered) {
+        const cleaned = entered.trim().toUpperCase().replace(/[^A-Z0-9_.-]/g, "_").substring(0, 20);
+        if (cleaned) {
+            localStorage.setItem("campusmesh_my_node_id", cleaned);
+            applyMyNodeId(cleaned);
+            fetchData();
+            showToast(`Node identity set to: ${cleaned}`, "success");
+        }
+    }
+};
+
 function detectInitialNode(resStatus) {
-    if (state.activeNodeId) {
-        applyActiveNode(state.activeNodeId, false);
+    const isLocalhost = window.location.hostname === "localhost" || 
+                        window.location.hostname === "127.0.0.1" || 
+                        window.location.hostname === "0.0.0.0";
+    const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    const stored = localStorage.getItem("campusmesh_my_node_id");
+    // Clear any stale demo default 'PHONE_MOBILE' if on localhost/desktop
+    if (stored && (!isLocalhost || stored !== "PHONE_MOBILE")) {
+        applyMyNodeId(stored);
         return;
     }
 
-    const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    let chosen = "LAPTOP_WIN";
-    if (resStatus && resStatus.isRemoteClient) {
-        chosen = "PHONE_MOBILE";
-    } else if (isMobileUA) {
-        chosen = "PHONE_MOBILE";
-    } else if (resStatus && resStatus.suggestedNodeId) {
-        chosen = resStatus.suggestedNodeId;
+    let chosen;
+    if (isLocalhost || !isMobileUA) {
+        // Desktop / Host machine
+        chosen = (resStatus && resStatus.localPeerId) ? resStatus.localPeerId : "LAPTOP_DOCKER";
+        localStorage.setItem("campusmesh_my_node_id", chosen);
+    } else {
+        // Mobile device accessing over Wi-Fi
+        chosen = (resStatus && resStatus.myNodeId && resStatus.myNodeId !== "LAPTOP_DOCKER") 
+                 ? resStatus.myNodeId : "PHONE_MOBILE";
     }
-
-    applyActiveNode(chosen, true);
+    applyMyNodeId(chosen);
 }
 
-function applyActiveNode(nodeId, saveStorage = true) {
+function applyMyNodeId(nodeId) {
+    state.myNodeId = nodeId;
     state.activeNodeId = nodeId;
-    if (saveStorage) {
-        localStorage.setItem("campusmesh_active_node", nodeId);
-    }
-    const select = document.getElementById("activeNodeSelect");
-    if (select && select.value !== nodeId) {
-        select.value = nodeId;
+
+    const isLocalhost = window.location.hostname === "localhost" || 
+                        window.location.hostname === "127.0.0.1";
+    const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    const badge = document.getElementById("myNodeIdBadge");
+    if (badge) {
+        let icon = (!isLocalhost && (isMobileUA || /MOBILE|PHONE/i.test(nodeId))) ? "📱" : "💻";
+        badge.textContent = `${icon} ${nodeId}`;
     }
 
     const srcInput = document.getElementById("composeSource");
-    const destInput = document.getElementById("composeDest");
-
     if (srcInput) {
         srcInput.value = nodeId;
     }
+
+    const destInput = document.getElementById("composeDest");
     if (destInput && (!destInput.value || destInput.value === nodeId)) {
         destInput.value = "BROADCAST";
     }
@@ -124,18 +149,19 @@ function applyActiveNode(nodeId, saveStorage = true) {
 // --------------------------------------------------------------------------
 function updateDynamicTopology() {
     if (state.isDemoActive) return;
-    const localId = state.activeNodeId || state.localPeer.id || "LAPTOP_WIN";
+    const localId = state.myNodeId || state.activeNodeId || state.localPeer.id || "LAPTOP_WIN";
     const newNodes = {};
     const newLinks = [];
 
     // 1. Center Local Operating Node (This Device)
     let localPlatform = "LOCAL";
-    let localLabel = localId;
-    if (localId.includes("WIN")) { localPlatform = "WINDOWS"; localLabel = "This Laptop (Win)"; }
-    else if (localId.includes("UBU") || localId.includes("LINUX")) { localPlatform = "UBUNTU"; localLabel = "Lab Workstation (Ubu)"; }
-    else if (localId.includes("AND")) { localPlatform = "ANDROID"; localLabel = "Galaxy Phone"; }
-    else if (localId.includes("IOS") || localId.includes("IPHONE")) { localPlatform = "IOS"; localLabel = "iPhone"; }
-    else if (localId.includes("MOBILE") || localId.includes("PHONE")) { localPlatform = "MOBILE"; localLabel = "Mobile Device"; }
+    let localLabel = `This Device (${localId})`;
+    if (localId.includes("DOCKER")) { localPlatform = "WINDOWS"; }
+    else if (localId.includes("WIN")) { localPlatform = "WINDOWS"; }
+    else if (localId.includes("UBU") || localId.includes("LINUX")) { localPlatform = "UBUNTU"; }
+    else if (localId.includes("AND")) { localPlatform = "ANDROID"; }
+    else if (localId.includes("IOS") || localId.includes("IPHONE")) { localPlatform = "IOS"; }
+    else if (localId.includes("MOBILE") || localId.includes("PHONE")) { localPlatform = "MOBILE"; }
 
     newNodes[localId] = {
         id: localId,
@@ -218,19 +244,7 @@ function renderQuickTargetPills(onlinePeers) {
     container.innerHTML = html;
 }
 
-// --------------------------------------------------------------------------
-// Event Listeners
-// --------------------------------------------------------------------------
 function initEventListeners() {
-    // Active Node Switcher
-    const activeSelect = document.getElementById("activeNodeSelect");
-    if (activeSelect) {
-        activeSelect.addEventListener("change", (e) => {
-            applyActiveNode(e.target.value, true);
-            showToast(`Operating node set to: ${e.target.value}`, "info");
-        });
-    }
-
     // Strategy Selector
     const stratSelect = document.getElementById("strategySelect");
     if (stratSelect) {
@@ -320,19 +334,11 @@ function initEventListeners() {
         });
     }
 
-    // Run Simulation Button
-    const btnSim = document.getElementById("btnRunSim");
-    if (btnSim) {
-        btnSim.addEventListener("click", () => {
-            runSimulation();
-        });
-    }
-
-    // Scan Radios Button
+    // Scan Radios & Sync Mesh Button
     const btnScan = document.getElementById("btnScanBle");
     if (btnScan) {
         btnScan.addEventListener("click", () => {
-            showToast("Broadcasting beacon on 239.255.77.88:5354 & scanning BLE 0000FE60...", "info");
+            showToast("Scanning Wi-Fi subnets & BLE 0000FE60 beacons...", "info");
             fetchData();
         });
     }
@@ -439,14 +445,21 @@ window.openMobileModal = function() {
         modal.style.display = "flex";
         const port = window.location.port || 8080;
         let host = state.serverLanIp;
-        if (!host || host === "127.0.0.1" || host === "localhost") {
-            host = (window.location.hostname && window.location.hostname !== "127.0.0.1" && window.location.hostname !== "localhost")
-                ? window.location.hostname
-                : "10.36.101.62";
+        // Docker containers report 172.x.x.x (bridge network) which is unreachable from mobile.
+        // In that case, use the hostname the browser is already connected to (the host's real LAN IP).
+        const isDockerBridge = host && host.startsWith("172.");
+        if (!host || host === "127.0.0.1" || host === "localhost" || isDockerBridge) {
+            const browserHost = window.location.hostname;
+            if (browserHost && browserHost !== "127.0.0.1" && browserHost !== "localhost" && browserHost !== "0.0.0.0") {
+                host = browserHost;
+            } else {
+                host = "YOUR_LAPTOP_IP";
+            }
         }
         const input = document.getElementById("mobileUrlInput");
         if (input) {
-            input.value = `http://${host}:${port}`;
+            const tokenHash = state.apiToken ? `/#token=${encodeURIComponent(state.apiToken)}` : "";
+            input.value = `http://${host}:${port}${tokenHash}`;
         }
     }
 };
@@ -486,8 +499,11 @@ function startPollingLoop() {
 
 async function fetchData() {
     try {
+        const pollHeaders = {};
+        if (state.myNodeId) pollHeaders["X-Node-ID"] = state.myNodeId;
+
         const [resStatus, resPeers, resBuf, resEval, resEvents] = await Promise.all([
-            fetch(`${API_BASE}/api/status`).then(r => r.json()).catch(() => null),
+            fetch(`${API_BASE}/api/status`, { headers: pollHeaders }).then(r => r.json()).catch(() => null),
             fetch(`${API_BASE}/api/peers`).then(r => r.json()).catch(() => []),
             fetch(`${API_BASE}/api/buffer`).then(r => r.json()).catch(() => []),
             fetch(`${API_BASE}/api/evaluation`).then(r => r.json()).catch(() => []),
@@ -497,6 +513,10 @@ async function fetchData() {
         if (resStatus) {
             if (resStatus.apiToken) {
                 state.apiToken = resStatus.apiToken;
+            } else if (!state.apiToken) {
+                // Remote device (phone): token comes from the link printed in the console, e.g. http://IP:8080/#token=...
+                const t = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("token");
+                if (t) state.apiToken = t;
             }
             state.serverLocalPeerId = resStatus.localPeerId || "LAPTOP_WIN";
             state.localPeer.id = resStatus.localPeerId || "LAPTOP_WIN";
@@ -504,14 +524,11 @@ async function fetchData() {
             if (resStatus.weights) state.weights = resStatus.weights;
             state.activeContacts = new Set(resStatus.activeContacts || []);
 
-            // Initialize or sync active node identity
-            if (!state.activeNodeId) {
+            // Initialize or sync this device's real node identity
+            if (!state.myNodeId) {
                 detectInitialNode(resStatus);
             } else {
-                const activeSelect = document.getElementById("activeNodeSelect");
-                if (activeSelect && activeSelect.value !== state.activeNodeId) {
-                    activeSelect.value = state.activeNodeId;
-                }
+                applyMyNodeId(state.myNodeId);
             }
 
             const navStrat = document.getElementById("navStrategy");
@@ -522,7 +539,16 @@ async function fetchData() {
                 const port = resStatus.serverPort || window.location.port || 8080;
                 const mobileUrlInput = document.getElementById("mobileUrlInput");
                 if (mobileUrlInput && !mobileUrlInput.dataset.manual) {
-                    mobileUrlInput.value = `http://${resStatus.serverLanIp}:${port}`;
+                    let displayIp = resStatus.serverLanIp;
+                    // Docker containers report 172.x.x.x bridge IPs; use the browser's host instead
+                    if (displayIp.startsWith("172.") || displayIp === "127.0.0.1") {
+                        const bh = window.location.hostname;
+                        if (bh && bh !== "127.0.0.1" && bh !== "localhost" && bh !== "0.0.0.0") {
+                            displayIp = bh;
+                        }
+                    }
+                    const tokenHash = state.apiToken ? `/#token=${encodeURIComponent(state.apiToken)}` : "";
+                    mobileUrlInput.value = `http://${displayIp}:${port}${tokenHash}`;
                 }
             }
 
@@ -641,26 +667,63 @@ window.selectPeer = function(peerId) {
     showToast(`Target set to ${peerId}`);
 };
 
-// --------------------------------------------------------------------------
-// Buffer Rendering
-// --------------------------------------------------------------------------
+// Buffer Filter State: "all" | "inbox" | "sent"
+state.bufferFilter = "all";
+
+window.setBufferFilter = function(filter) {
+    state.bufferFilter = filter;
+    document.querySelectorAll(".buffer-tab").forEach(tab => {
+        tab.classList.toggle("active", tab.id === `tabBuf${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+    });
+    renderBuffer();
+};
+
 function renderBuffer() {
     const list = document.getElementById("bufferList");
     if (!list) return;
 
-    if (!state.buffer || state.buffer.length === 0) {
+    const allMsgs = state.buffer || [];
+    const myId = state.myNodeId || state.activeNodeId || "";
+
+    const inboxMsgs = allMsgs.filter(m => m.destinationId === "BROADCAST" || m.destinationId === myId);
+    const sentMsgs = allMsgs.filter(m => m.sourceId === myId);
+
+    const cAll = document.getElementById("bufCountAll");
+    const cInbox = document.getElementById("bufCountInbox");
+    const cSent = document.getElementById("bufCountSent");
+    if (cAll) cAll.textContent = allMsgs.length;
+    if (cInbox) cInbox.textContent = inboxMsgs.length;
+    if (cSent) cSent.textContent = sentMsgs.length;
+
+    let filtered = allMsgs;
+    if (state.bufferFilter === "inbox") filtered = inboxMsgs;
+    else if (state.bufferFilter === "sent") filtered = sentMsgs;
+
+    if (filtered.length === 0) {
+        let emptyLabel = "No DTN messages currently in local store.";
+        if (state.bufferFilter === "inbox") emptyLabel = "No incoming messages addressed to this device.";
+        else if (state.bufferFilter === "sent") emptyLabel = "No messages sent from this device yet.";
         list.innerHTML = `
             <div class="empty-state">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span>No DTN messages currently in local store.</span>
+                <span>${emptyLabel}</span>
             </div>`;
         return;
     }
 
-    list.innerHTML = state.buffer.map(m => {
+    list.innerHTML = filtered.map(m => {
+        const isMine = m.sourceId === myId;
+        const isForMe = m.destinationId === myId;
+        const isBroadcast = m.destinationId === "BROADCAST";
         const pClass = m.priority === "HIGH" ? "badge-high" : (m.priority === "MEDIUM" ? "badge-medium" : "badge-low");
         const remainingSec = Math.max(0, m.remainingTTL || 0);
         const ttlMin = Math.round(remainingSec / 60);
+
+        let roleBadge = "";
+        if (isMine) roleBadge = `<span class="badge" style="background: rgba(56, 189, 248, 0.2); color: var(--accent-cyan); font-size: 0.68rem;">📤 Outbox (Sent)</span>`;
+        else if (isForMe) roleBadge = `<span class="badge" style="background: rgba(74, 222, 128, 0.2); color: var(--accent-green); font-size: 0.68rem;">📥 Inbox (For You)</span>`;
+        else if (isBroadcast) roleBadge = `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); font-size: 0.68rem;">📡 Broadcast</span>`;
+        else roleBadge = `<span class="badge" style="background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); font-size: 0.68rem;">📦 Mesh Relay</span>`;
 
         let ttlColor = "var(--accent-green)";
         if (remainingSec < 300) {
@@ -672,9 +735,10 @@ function renderBuffer() {
         return `
             <div class="message-card" onclick='inspectMessage(${JSON.stringify(m)})' title="Click to inspect Bluetooth LE packets">
                 <div class="message-header">
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span class="msg-id">${escapeHtml(m.messageId)}</span>
                         <span class="msg-path">${escapeHtml(m.sourceId)} ➔ ${escapeHtml(m.destinationId)}</span>
+                        ${roleBadge}
                     </div>
                     <span class="badge ${pClass}">${escapeHtml(m.priority)}</span>
                 </div>
@@ -860,83 +924,21 @@ async function submitMessage() {
     }
 }
 
-async function runSimulation() {
+window.scanRadiosAndSync = async function() {
     try {
-        const headers = {};
-        if (state.apiToken) headers["X-CampusMesh-Token"] = state.apiToken;
-
-        const response = await fetch(`${API_BASE}/api/simulation/run`, {
-            method: "POST",
-            headers
-        });
-
-        if (response.status === 409) {
-            showToast("Simulation is already running! Please wait for completion.", "warning");
-            return;
-        }
-
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            showToast(err.message || "Simulation failed to start", "danger");
-            return;
-        }
-
-        showToast("Heterogeneous Mesh Simulation started!", "info");
-
-        // Animate packet to online peers if present
-        const localId = state.activeNodeId || state.localPeer.id || "LAPTOP_WIN";
-        const peerKeys = Object.keys(nodes).filter(k => k !== localId);
-        if (peerKeys.length > 0) {
-            peerKeys.forEach((targetId, idx) => {
-                setTimeout(() => triggerPacketAnimation(localId, targetId), 250 + idx * 800);
-            });
-            setTimeout(fetchData, 800);
+        showToast("Broadcasting beacon on 239.255.77.88:5354 & scanning BLE...", "info");
+        await fetchData();
+        const myId = state.myNodeId || "";
+        const onlineCount = (state.peers || []).filter(p => !p.isExpired && p.peerId !== myId).length;
+        if (onlineCount > 0) {
+            showToast(`Discovered ${onlineCount} active peer(s) in local mesh!`, "success");
         } else {
-            // No physical peers online: render multi-hop cross-platform demonstration topology
-            state.isDemoActive = true;
-            nodes = {
-                "LAPTOP_WIN": { id: "LAPTOP_WIN", x: 140, y: 190, label: "Laptop (Win)", platform: "WINDOWS", isLocal: true, inContact: true },
-                "PHONE_AND": { id: "PHONE_AND", x: 250, y: 90, label: "Galaxy S23 (And)", platform: "ANDROID", isLocal: false, inContact: true },
-                "IPHONE_IOS": { id: "IPHONE_IOS", x: 380, y: 90, label: "iPhone 15 (iOS)", platform: "IOS", isLocal: false, inContact: true },
-                "LAPTOP_UBU": { id: "LAPTOP_UBU", x: 480, y: 190, label: "Ubuntu Lab (Ubu)", platform: "UBUNTU", isLocal: false, inContact: true }
-            };
-            links = [
-                { from: "LAPTOP_WIN", to: "PHONE_AND", transport: "WIFI" },
-                { from: "PHONE_AND", to: "IPHONE_IOS", transport: "BLE" },
-                { from: "IPHONE_IOS", to: "LAPTOP_UBU", transport: "WIFI" }
-            ];
-
-            setTimeout(() => {
-                triggerPacketAnimation("LAPTOP_WIN", "PHONE_AND");
-                showToast("Hop 1: Windows Laptop -> Galaxy S23 (Wi-Fi TCP)", "info");
-            }, 300);
-
-            setTimeout(() => {
-                triggerPacketAnimation("PHONE_AND", "IPHONE_IOS");
-                showToast("Hop 2: Galaxy S23 -> iPhone 15 (BLE GATT Chunks + CRC32)", "info");
-            }, 1200);
-
-            setTimeout(() => {
-                triggerPacketAnimation("IPHONE_IOS", "LAPTOP_UBU");
-                showToast("Hop 3: iPhone 15 -> Ubuntu Lab Node (Wi-Fi TCP Delivered!)", "success");
-            }, 2100);
-
-            setTimeout(() => {
-                fetchData();
-                showToast("End-to-End Multi-Transport Mesh Demo Complete!", "success");
-            }, 3000);
-
-            // Revert back to active peers after 7.5 seconds
-            setTimeout(() => {
-                state.isDemoActive = false;
-                updateDynamicTopology();
-            }, 7500);
+            showToast("No other mesh nodes in range. Connect another phone or laptop to Wi-Fi to appear on radar.", "info");
         }
-    } catch (err) {
-        console.error(err);
-        showToast("Simulation trigger failed: " + err.message, "danger");
+    } catch (e) {
+        console.error(e);
     }
-}
+};
 
 // --------------------------------------------------------------------------
 // Interactive HTML5 Canvas Radar Topology

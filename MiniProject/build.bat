@@ -4,6 +4,32 @@ echo ========================================
 echo Compiling CampusMesh Backend...
 echo ========================================
 
+where javac >nul 2>nul
+if errorlevel 1 (
+    if defined JAVA_HOME if exist "%JAVA_HOME%\bin\javac.exe" set "PATH=%JAVA_HOME%\bin;%PATH%"
+)
+where javac >nul 2>nul
+if errorlevel 1 (
+    for /d %%D in ("%USERPROFILE%\.jdks\*") do (
+        if exist "%%D\bin\javac.exe" (
+            set "PATH=%%D\bin;%PATH%"
+            goto :jdk_found
+        )
+    )
+    for /d %%D in ("%ProgramFiles%\Java\*") do (
+        if exist "%%D\bin\javac.exe" (
+            set "PATH=%%D\bin;%PATH%"
+            goto :jdk_found
+        )
+    )
+)
+:jdk_found
+where javac >nul 2>nul
+if errorlevel 1 (
+    echo [ERROR] javac not found. Install a JDK ^(Java 11+^), not just a JRE, and add it to PATH.
+    exit /b 1
+)
+
 if not exist bin mkdir bin
 if not exist database mkdir database
 
